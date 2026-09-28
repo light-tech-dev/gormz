@@ -1,4 +1,4 @@
-# Security — الأمان في gormx
+# Security — الأمان في gormz
 
 > حماية تطبيقك من SQL injection وأخطاء شائعة.
 
@@ -12,10 +12,10 @@
 
 ```go
 // ❌ يpanic
-gormx.New[User]().Filter("name; DROP TABLE users", "x")
+gormz.New[User]().Filter("name; DROP TABLE users", "x")
 
 // ✅ آمن
-gormx.New[User]().Filter("name", "x")
+gormz.New[User]().Filter("name", "x")
 ```
 
 **القواعد**:
@@ -35,11 +35,11 @@ gormx.New[User]().Filter("name", "x")
 
 ```go
 // ❌ خطأ
-gormx.New[User]().UpdateMany(map[string]any{"active": false})
+gormz.New[User]().UpdateMany(map[string]any{"active": false})
 // err = dangerous operation
 
 // ✅
-gormx.New[User]().
+gormz.New[User]().
     Filter("age__lt", 18).
     UpdateMany(map[string]any{"active": false})
 ```
@@ -65,10 +65,10 @@ gormx.New[User]().
 
 ```go
 // ❌ خطر
-gormx.Raw("SELECT * FROM users WHERE name = '" + name + "'")
+gormz.Raw("SELECT * FROM users WHERE name = '" + name + "'")
 
 // ✅ آمن
-gormx.Raw("SELECT * FROM users WHERE name = ?", name)
+gormz.Raw("SELECT * FROM users WHERE name = ?", name)
 ```
 
 ### 3. `Select`/`OrderBy`
@@ -125,7 +125,7 @@ type User struct {
 }
 
 // أو
-users, _ := gormx.New[User]().
+users, _ := gormz.New[User]().
     Omit("password", "token").
     All()
 ```
@@ -139,7 +139,7 @@ users, _ := gormx.New[User]().
 ```go
 // ❌ خطر
 fieldName := c.Query("sort_by")
-gormx.New[User]().Filter(fieldName, value)  // panic (بفضل validation)
+gormz.New[User]().Filter(fieldName, value)  // panic (بفضل validation)
 
 // ✅ آمن — استخدم whitelist
 allowed := map[string]bool{"name": true, "age": true, "email": true}
@@ -170,11 +170,11 @@ type UpdateDTO struct {
 ```go
 // ❌ المستخدم قد يستعيد محذوفًا
 func DeleteUser(id uint) error {
-    return gormx.New[User]().Delete(id).Error  // soft
+    return gormz.New[User]().Delete(id).Error  // soft
 }
 
 // قد يستخدم
-gormx.New[User]().WithDeleted().Get(id)  // يعرض المحذوف
+gormz.New[User]().WithDeleted().Get(id)  // يعرض المحذوف
 ```
 
 **الحل**: تحقق من `DeletedAt` في handlers حساسة.
@@ -211,7 +211,7 @@ func TestSQLInjection(t *testing.T) {
     for _, input := range malicious {
         t.Run(input, func(t *testing.T) {
             assert.Panics(t, func() {
-                gormx.New[User]().Filter(input, "x")
+                gormz.New[User]().Filter(input, "x")
             })
         })
     }

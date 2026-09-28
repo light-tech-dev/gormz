@@ -1,10 +1,10 @@
-package gormx_test
+package gormz_test
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/abdallah-elngar/gormx"
+	"github.com/light-tech-dev/gormz"
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -25,15 +25,15 @@ func setupBenchDB(b *testing.B) {
 	require.NoError(b, err)
 	require.NoError(b, db.AutoMigrate(&User{}, &Order{}))
 
-	gormx.SetDB(db)
-	gormx.ClearRegistry()
+	gormz.SetDB(db)
+	gormz.ClearRegistry()
 
 	b.Cleanup(func() {
 		if sqlDB, err := db.DB(); err == nil && sqlDB != nil {
 			_ = sqlDB.Close()
 		}
-		gormx.ResetDB()
-		gormx.ClearRegistry()
+		gormz.ResetDB()
+		gormz.ClearRegistry()
 	})
 }
 
@@ -50,7 +50,7 @@ func BenchmarkCreate(b *testing.B) {
 			Name:  "User",
 			Email: fmt.Sprintf("user%d@test.com", i),
 		}
-		if err := gormx.New[User]().Create(user); err != nil {
+		if err := gormz.New[User]().Create(user); err != nil {
 			b.Fatal(err)
 		}
 	}
@@ -68,7 +68,7 @@ func BenchmarkCreateMany(b *testing.B) {
 				Email: fmt.Sprintf("user%d_%d@test.com", i, j),
 			}
 		}
-		if err := gormx.New[User]().CreateMany(users); err != nil {
+		if err := gormz.New[User]().CreateMany(users); err != nil {
 			b.Fatal(err)
 		}
 	}
@@ -77,7 +77,7 @@ func BenchmarkCreateMany(b *testing.B) {
 func BenchmarkFirst(b *testing.B) {
 	setupBenchDB(b)
 
-	if err := gormx.New[User]().Create(&User{
+	if err := gormz.New[User]().Create(&User{
 		Name:  "Ali",
 		Email: "ali@test.com",
 	}); err != nil {
@@ -86,7 +86,7 @@ func BenchmarkFirst(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := gormx.New[User]().First()
+		_, err := gormz.New[User]().First()
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -98,7 +98,7 @@ func BenchmarkFilter(b *testing.B) {
 
 	// Seed 1000 users
 	for i := 0; i < 1000; i++ {
-		if err := gormx.New[User]().Create(&User{
+		if err := gormz.New[User]().Create(&User{
 			Name:   "User",
 			Email:  fmt.Sprintf("user%d@test.com", i),
 			Age:    20 + (i % 50),
@@ -110,7 +110,7 @@ func BenchmarkFilter(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := gormx.New[User]().
+		_, err := gormz.New[User]().
 			Filter("active", true).
 			Filter("age__gte", 30).
 			Limit(10).
@@ -125,7 +125,7 @@ func BenchmarkPaginate(b *testing.B) {
 	setupBenchDB(b)
 
 	for i := 0; i < 1000; i++ {
-		if err := gormx.New[User]().Create(&User{
+		if err := gormz.New[User]().Create(&User{
 			Name:  "User",
 			Email: fmt.Sprintf("user%d@test.com", i),
 		}); err != nil {
@@ -135,7 +135,7 @@ func BenchmarkPaginate(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := gormx.New[User]().OrderBy("id").Paginate(1, 20)
+		_, err := gormz.New[User]().OrderBy("id").Paginate(1, 20)
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -146,7 +146,7 @@ func BenchmarkCount(b *testing.B) {
 	setupBenchDB(b)
 
 	for i := 0; i < 1000; i++ {
-		if err := gormx.New[User]().Create(&User{
+		if err := gormz.New[User]().Create(&User{
 			Name:  "User",
 			Email: fmt.Sprintf("u%d@test.com", i),
 		}); err != nil {
@@ -156,7 +156,7 @@ func BenchmarkCount(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := gormx.New[User]().Count()
+		_, err := gormz.New[User]().Count()
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -166,7 +166,7 @@ func BenchmarkCount(b *testing.B) {
 func BenchmarkExists(b *testing.B) {
 	setupBenchDB(b)
 
-	if err := gormx.New[User]().Create(&User{
+	if err := gormz.New[User]().Create(&User{
 		Name:  "Ali",
 		Email: "ali@test.com",
 	}); err != nil {
@@ -175,7 +175,7 @@ func BenchmarkExists(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, err := gormx.New[User]().Filter("name", "Ali").Exists()
+		_, err := gormz.New[User]().Filter("name", "Ali").Exists()
 		if err != nil {
 			b.Fatal(err)
 		}
@@ -190,7 +190,7 @@ func BenchmarkQuerySet_Chain(b *testing.B) {
 	setupBenchDB(b)
 
 	for i := 0; i < 500; i++ {
-		if err := gormx.New[User]().Create(&User{
+		if err := gormz.New[User]().Create(&User{
 			Name:   "User",
 			Email:  fmt.Sprintf("u%d@test.com", i),
 			Age:    20 + (i % 50),
@@ -202,7 +202,7 @@ func BenchmarkQuerySet_Chain(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		q := gormx.New[User]().
+		q := gormz.New[User]().
 			Filter("active", true).
 			Filter("age__gte", 30).
 			OrderBy("-age").
@@ -222,11 +222,11 @@ func BenchmarkQuerySet_Chain(b *testing.B) {
 func BenchmarkRegistry_Lookup(b *testing.B) {
 	setupBenchDB(b)
 
-	gormx.Register[User]("user")
+	gormz.Register[User]("user")
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		_, ok := gormx.Lookup[User]("user")
+		_, ok := gormz.Lookup[User]("user")
 		if !ok {
 			b.Fatal("not found")
 		}
@@ -237,12 +237,12 @@ func BenchmarkRegistry_Lookup(b *testing.B) {
 // Comparison with GORM
 // ═══════════════════════════════════════════════
 
-// BenchmarkVsGORM compares gormx vs raw GORM.
+// BenchmarkVsGORM compares gormz vs raw GORM.
 func BenchmarkVsGORM(b *testing.B) {
 	setupBenchDB(b)
 
 	for i := 0; i < 1000; i++ {
-		if err := gormx.New[User]().Create(&User{
+		if err := gormz.New[User]().Create(&User{
 			Name:   "User",
 			Email:  fmt.Sprintf("u%d@test.com", i),
 			Age:    20 + (i % 50),
@@ -252,10 +252,10 @@ func BenchmarkVsGORM(b *testing.B) {
 		}
 	}
 
-	b.Run("gormx", func(b *testing.B) {
+	b.Run("gormz", func(b *testing.B) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			_, err := gormx.New[User]().
+			_, err := gormz.New[User]().
 				Filter("active", true).
 				Filter("age__gte", 30).
 				Limit(10).
@@ -267,7 +267,7 @@ func BenchmarkVsGORM(b *testing.B) {
 	})
 
 	b.Run("gorm", func(b *testing.B) {
-		db := gormx.DB()
+		db := gormz.DB()
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			var users []User

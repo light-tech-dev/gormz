@@ -3,8 +3,8 @@ package advanced
 import (
 	"fmt"
 
-	"github.com/abdallah-elngar/gormx"
-	"github.com/abdallah-elngar/gormx/internal"
+	"github.com/light-tech-dev/gormz"
+	"github.com/light-tech-dev/gormz/internal"
 )
 
 // ═══════════════════════════════════════════════
@@ -24,12 +24,12 @@ type SubQuery struct {
 // SubFrom ينشئ SubQuery من QuerySet.
 //
 //	subq := advanced.SubFrom[Order](
-//	    gormx.New[Order]().
+//	    gormz.New[Order]().
 //	        Select("user_id").
 //	        Filter("status", "paid"),
 //	    "user_id",
 //	)
-func SubFrom[T any](q *gormx.QuerySet[T], field string) *SubQuery {
+func SubFrom[T any](q *gormz.QuerySet[T], field string) *SubQuery {
 	if q == nil {
 		return &SubQuery{}
 	}
@@ -42,7 +42,7 @@ func SubFrom[T any](q *gormx.QuerySet[T], field string) *SubQuery {
 }
 
 // SubFromColumns ينشئ SubQuery مع تحديد الأعمدة.
-func SubFromColumns[T any](q *gormx.QuerySet[T], columns ...string) *SubQuery {
+func SubFromColumns[T any](q *gormz.QuerySet[T], columns ...string) *SubQuery {
 	if q == nil {
 		return &SubQuery{}
 	}

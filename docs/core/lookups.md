@@ -1,6 +1,6 @@
 # Lookups — المرجع الكامل
 
-> Django-style filters: `field__lookup`.
+> modern-style filters: `field__lookup`.
 
 ---
 
@@ -82,7 +82,7 @@ field__lookup = value
 
 ```go
 // ابحث عن مستخدمين اسمهم يحتوي "Ali"
-users, _ := gormx.New[User]().
+users, _ := gormz.New[User]().
     Filter("name__icontains", "ali").
     All()
 ```
@@ -91,7 +91,7 @@ users, _ := gormx.New[User]().
 
 ```go
 // active + age 18-65 + verified
-users, _ := gormx.New[User]().
+users, _ := gormz.New[User]().
     Filter("active", true).
     Filter("age__between", []int{18, 65}).
     Filter("status", "verified").
@@ -102,7 +102,7 @@ users, _ := gormx.New[User]().
 
 ```go
 // من محافظات معينة
-users, _ := gormx.New[User]().
+users, _ := gormz.New[User]().
     Filter("city__in", []string{"Cairo", "Alexandria", "Giza"}).
     All()
 ```
@@ -111,12 +111,12 @@ users, _ := gormx.New[User]().
 
 ```go
 // غير محذوفين
-users, _ := gormx.New[User]().
+users, _ := gormz.New[User]().
     Filter("deleted_at__isnull", true).
     All()
 
 // محذوفين
-deleted, _ := gormx.New[User]().
+deleted, _ := gormz.New[User]().
     Filter("deleted_at__isnull", false).
     All()
 ```
@@ -125,12 +125,12 @@ deleted, _ := gormx.New[User]().
 
 ```go
 // مستخدمون سُجّلوا في 2025
-users, _ := gormx.New[User]().
+users, _ := gormz.New[User]().
     Filter("created_at__year", 2025).
     All()
 
 // سُجّلوا في ديسمبر
-users, _ := gormx.New[User]().
+users, _ := gormz.New[User]().
     Filter("created_at__month", 12).
     All()
 ```
@@ -147,7 +147,7 @@ users, _ := gormx.New[User]().
 | MySQL | `YEAR(col)` |
 | SQLite | `CAST(strftime('%Y', col) AS INTEGER)` |
 
-gormx يكتشف تلقائيًا.
+gormz يكتشف تلقائيًا.
 
 ### `icontains` performance
 

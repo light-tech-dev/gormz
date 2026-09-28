@@ -29,8 +29,8 @@ advanced.UnionAll(q1, q2).All()
 ### مثال 1: Basic
 
 ```go
-q1 := gormx.New[User]().Filter("status", "active")
-q2 := gormx.New[User]().Filter("status", "pending")
+q1 := gormz.New[User]().Filter("status", "active")
+q2 := gormz.New[User]().Filter("status", "pending")
 
 users, err := advanced.Union(q1, q2).All()
 // = (active ∪ pending) مع حذف المكرر
@@ -39,8 +39,8 @@ users, err := advanced.Union(q1, q2).All()
 ### مثال 2: Union All
 
 ```go
-q1 := gormx.New[Log]().Filter("level", "error")
-q2 := gormx.New[Log]().Filter("level", "critical")
+q1 := gormz.New[Log]().Filter("level", "error")
+q2 := gormz.New[Log]().Filter("level", "critical")
 
 logs, _ := advanced.UnionAll(q1, q2).All()
 // = error + critical (بدون حذف)
@@ -61,13 +61,13 @@ users, _ := advanced.Union(q1, q2).
 uq := advanced.Union[User]()
 
 if filter.Active {
-    uq.Add(gormx.New[User]().Filter("status", "active"))
+    uq.Add(gormz.New[User]().Filter("status", "active"))
 }
 if filter.Pending {
-    uq.Add(gormx.New[User]().Filter("status", "pending"))
+    uq.Add(gormz.New[User]().Filter("status", "pending"))
 }
 if filter.Archived {
-    uq.Add(gormx.New[User]().Filter("status", "archived"))
+    uq.Add(gormz.New[User]().Filter("status", "archived"))
 }
 
 users, _ := uq.All()
@@ -83,12 +83,12 @@ users, _ := uq.All()
 
 ```go
 // ❌ خطأ
-q1 := gormx.New[User]().Select("id", "name")
-q2 := gormx.New[User]().Select("id")  // 1 عمود فقط
+q1 := gormz.New[User]().Select("id", "name")
+q2 := gormz.New[User]().Select("id")  // 1 عمود فقط
 advanced.Union(q1, q2)  // error
 
 // ✅ صحيح
-q2 := gormx.New[User]().Select("id", "name")
+q2 := gormz.New[User]().Select("id", "name")
 ```
 
 ### 2. Column Types

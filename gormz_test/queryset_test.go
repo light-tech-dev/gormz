@@ -1,10 +1,10 @@
-package gormx_test
+package gormz_test
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/abdallah-elngar/gormx"
+	"github.com/light-tech-dev/gormz"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -17,7 +17,7 @@ func TestCreate(t *testing.T) {
 	setupTestDB(t)
 
 	user := &User{Name: "Ali", Email: "ali@test.com", Age: 30, Active: true}
-	err := gormx.New[User]().Create(user)
+	err := gormz.New[User]().Create(user)
 
 	require.NoError(t, err)
 	assert.NotZero(t, user.ID)
@@ -26,7 +26,7 @@ func TestCreate(t *testing.T) {
 func TestCreateNil(t *testing.T) {
 	setupTestDB(t)
 
-	err := gormx.New[User]().Create(nil)
+	err := gormz.New[User]().Create(nil)
 	assert.Error(t, err)
 }
 
@@ -38,20 +38,20 @@ func TestCreateMany(t *testing.T) {
 		{Name: "Sara", Email: "sara@test.com"},
 	}
 
-	err := gormx.New[User]().CreateMany(users)
+	err := gormz.New[User]().CreateMany(users)
 	require.NoError(t, err)
 
-	count, _ := gormx.New[User]().Count()
+	count, _ := gormz.New[User]().Count()
 	assert.Equal(t, int64(2), count)
 }
 
 func TestCreateManyEmpty(t *testing.T) {
 	setupTestDB(t)
 
-	err := gormx.New[User]().CreateMany(nil)
+	err := gormz.New[User]().CreateMany(nil)
 	require.NoError(t, err)
 
-	count, _ := gormx.New[User]().Count()
+	count, _ := gormz.New[User]().Count()
 	assert.Equal(t, int64(0), count)
 }
 
@@ -68,10 +68,10 @@ func TestCreateInBatches(t *testing.T) {
 		}
 	}
 
-	err := gormx.New[User]().CreateInBatches(users, 500)
+	err := gormz.New[User]().CreateInBatches(users, 500)
 	require.NoError(t, err)
 
-	count, _ := gormx.New[User]().Count()
+	count, _ := gormz.New[User]().Count()
 	assert.Equal(t, int64(total), count)
 }
 
@@ -79,7 +79,7 @@ func TestGet(t *testing.T) {
 	setupTestDB(t)
 	seedUsers(t)
 
-	user, err := gormx.New[User]().Get(1)
+	user, err := gormz.New[User]().Get(1)
 	require.NoError(t, err)
 	assert.Equal(t, "Ali", user.Name)
 }
@@ -87,11 +87,11 @@ func TestGet(t *testing.T) {
 func TestGetNotFound(t *testing.T) {
 	setupTestDB(t)
 
-	_, err := gormx.New[User]().Get(999)
+	_, err := gormz.New[User]().Get(999)
 	assert.Error(t, err)
-	assert.True(t, gormx.IsNotFound(err))
+	assert.True(t, gormz.IsNotFound(err))
 
-	ne, ok := gormx.AsNotFound(err)
+	ne, ok := gormz.AsNotFound(err)
 	assert.True(t, ok)
 	assert.Equal(t, "User", ne.Model)
 	assert.Equal(t, 999, ne.ID)
@@ -101,11 +101,11 @@ func TestGetOrNil(t *testing.T) {
 	setupTestDB(t)
 	seedUsers(t)
 
-	user, err := gormx.New[User]().GetOrNil(1)
+	user, err := gormz.New[User]().GetOrNil(1)
 	require.NoError(t, err)
 	assert.NotNil(t, user)
 
-	user, err = gormx.New[User]().GetOrNil(999)
+	user, err = gormz.New[User]().GetOrNil(999)
 	require.NoError(t, err)
 	assert.Nil(t, user)
 }
@@ -114,7 +114,7 @@ func TestFirst(t *testing.T) {
 	setupTestDB(t)
 	seedUsers(t)
 
-	user, err := gormx.New[User]().
+	user, err := gormz.New[User]().
 		Filter("name", "Ali").
 		First()
 
@@ -126,11 +126,11 @@ func TestFirstOrNil(t *testing.T) {
 	setupTestDB(t)
 
 	seedUsers(t)
-	user, err := gormx.New[User]().Filter("name", "Ali").FirstOrNil()
+	user, err := gormz.New[User]().Filter("name", "Ali").FirstOrNil()
 	require.NoError(t, err)
 	assert.NotNil(t, user)
 
-	user, err = gormx.New[User]().Filter("name", "Nobody").FirstOrNil()
+	user, err = gormz.New[User]().Filter("name", "Nobody").FirstOrNil()
 	require.NoError(t, err)
 	assert.Nil(t, user)
 }
@@ -139,7 +139,7 @@ func TestLast(t *testing.T) {
 	setupTestDB(t)
 	seedUsers(t)
 
-	user, err := gormx.New[User]().Last()
+	user, err := gormz.New[User]().Last()
 	require.NoError(t, err)
 	assert.Equal(t, "Hassan", user.Name)
 }
@@ -148,7 +148,7 @@ func TestFind(t *testing.T) {
 	setupTestDB(t)
 	seedUsers(t)
 
-	user, err := gormx.New[User]().Find("email", "ali@test.com")
+	user, err := gormz.New[User]().Find("email", "ali@test.com")
 	require.NoError(t, err)
 	assert.Equal(t, "Ali", user.Name)
 }
@@ -156,15 +156,15 @@ func TestFind(t *testing.T) {
 func TestFindNotFound(t *testing.T) {
 	setupTestDB(t)
 
-	_, err := gormx.New[User]().Find("email", "nobody@test.com")
+	_, err := gormz.New[User]().Find("email", "nobody@test.com")
 	assert.Error(t, err)
-	assert.True(t, gormx.IsNotFound(err))
+	assert.True(t, gormz.IsNotFound(err))
 }
 
 func TestFindOrNil(t *testing.T) {
 	setupTestDB(t)
 
-	user, err := gormx.New[User]().FindOrNil("email", "nobody@test.com")
+	user, err := gormz.New[User]().FindOrNil("email", "nobody@test.com")
 	require.NoError(t, err)
 	assert.Nil(t, user)
 }
@@ -173,10 +173,10 @@ func TestUpdate(t *testing.T) {
 	setupTestDB(t)
 	seedUsers(t)
 
-	err := gormx.New[User]().Update(1, "age", 31)
+	err := gormz.New[User]().Update(1, "age", 31)
 	require.NoError(t, err)
 
-	user, _ := gormx.New[User]().Get(1)
+	user, _ := gormz.New[User]().Get(1)
 	assert.Equal(t, 31, user.Age)
 }
 
@@ -184,11 +184,11 @@ func TestUpdateManyRequiresConditions(t *testing.T) {
 	setupTestDB(t)
 	seedUsers(t)
 
-	_, err := gormx.New[User]().UpdateMany(map[string]any{"active": false})
+	_, err := gormz.New[User]().UpdateMany(map[string]any{"active": false})
 	assert.Error(t, err)
-	assert.True(t, gormx.IsDangerous(err))
+	assert.True(t, gormz.IsDangerous(err))
 
-	affected, err := gormx.New[User]().
+	affected, err := gormz.New[User]().
 		Filter("age__lt", 18).
 		UpdateMany(map[string]any{"active": false})
 	require.NoError(t, err)
@@ -199,7 +199,7 @@ func TestUpdateManyInvalidField(t *testing.T) {
 	setupTestDB(t)
 	seedUsers(t)
 
-	_, err := gormx.New[User]().
+	_, err := gormz.New[User]().
 		Filter("active", true).
 		UpdateMany(map[string]any{"bad field": "x"})
 	assert.Error(t, err)
@@ -209,10 +209,10 @@ func TestDelete(t *testing.T) {
 	setupTestDB(t)
 	seedUsers(t)
 
-	err := gormx.New[User]().Delete(1)
+	err := gormz.New[User]().Delete(1)
 	require.NoError(t, err)
 
-	exists, _ := gormx.New[User]().Filter("id", 1).Exists()
+	exists, _ := gormz.New[User]().Filter("id", 1).Exists()
 	assert.False(t, exists)
 }
 
@@ -220,11 +220,11 @@ func TestDeleteManyRequiresConditions(t *testing.T) {
 	setupTestDB(t)
 	seedUsers(t)
 
-	_, err := gormx.New[User]().DeleteMany()
+	_, err := gormz.New[User]().DeleteMany()
 	assert.Error(t, err)
-	assert.True(t, gormx.IsDangerous(err))
+	assert.True(t, gormz.IsDangerous(err))
 
-	affected, err := gormx.New[User]().
+	affected, err := gormz.New[User]().
 		Filter("active", false).
 		DeleteMany()
 	require.NoError(t, err)

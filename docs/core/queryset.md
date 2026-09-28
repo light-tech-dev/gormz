@@ -9,7 +9,7 @@
 `QuerySet[T]` هو **builder** للاستعلامات:
 
 ```go
-users, _ := gormx.New[User]().
+users, _ := gormz.New[User]().
     Filter("active", true).
     Filter("age__gte", 18).
     OrderBy("-created_at").
@@ -30,21 +30,21 @@ users, _ := gormx.New[User]().
 ### `New[T]()`
 
 ```go
-q := gormx.New[User]()
+q := gormz.New[User]()
 ```
 
 ### `NewWith[T](instance)`
 
 ```go
-app := gormx.NewInstance(db)
-q := gormx.NewWith[User](app)
+app := gormz.NewInstance(db)
+q := gormz.NewWith[User](app)
 ```
 
 ### `FromContext[T](ctx)`
 
 ```go
-ctx := gormx.WithDB(context.Background(), app)
-q := gormx.FromContext[User](ctx)
+ctx := gormz.WithDB(context.Background(), app)
+q := gormz.FromContext[User](ctx)
 ```
 
 ---
@@ -91,11 +91,11 @@ SQL خام:
 شروط معقدة:
 
 ```go
-q := gormx.QOr(
-    gormx.Eq("status", "active"),
-    gormx.Eq("status", "pending"),
+q := gormz.QOr(
+    gormz.Eq("status", "active"),
+    gormz.Eq("status", "pending"),
 )
-users, _ := gormx.New[User]().Q(q).All()
+users, _ := gormz.New[User]().Q(q).All()
 ```
 
 ---
@@ -129,7 +129,7 @@ users, _ := gormx.New[User]().Q(q).All()
 ### `Paginate(page, perPage)`
 
 ```go
-page, _ := gormx.New[User]().Paginate(1, 20)
+page, _ := gormz.New[User]().Paginate(1, 20)
 // page.Items, page.Total, page.HasNext, ...
 ```
 
@@ -169,7 +169,7 @@ page, _ := gormx.New[User]().Paginate(1, 20)
 يشمل السجلات المحذوفة:
 
 ```go
-users, _ := gormx.New[User]().WithDeleted().All()
+users, _ := gormz.New[User]().WithDeleted().All()
 ```
 
 ### `OnlyDeleted()`
@@ -177,7 +177,7 @@ users, _ := gormx.New[User]().WithDeleted().All()
 السجلات المحذوفة فقط:
 
 ```go
-users, _ := gormx.New[User]().OnlyDeleted().All()
+users, _ := gormz.New[User]().OnlyDeleted().All()
 ```
 
 ---
@@ -187,14 +187,14 @@ users, _ := gormx.New[User]().OnlyDeleted().All()
 ### `All()`
 
 ```go
-users, err := gormx.New[User]().All()
+users, err := gormz.New[User]().All()
 // users = []User
 ```
 
 ### `First()`
 
 ```go
-user, err := gormx.New[User]().First()
+user, err := gormz.New[User]().First()
 // user = *User (nil if not found)
 // err = ErrNotFound if not found
 ```
@@ -202,7 +202,7 @@ user, err := gormx.New[User]().First()
 ### `FirstOrNil()`
 
 ```go
-user, err := gormx.New[User]().FirstOrNil()
+user, err := gormz.New[User]().FirstOrNil()
 // user = nil if not found
 // err = nil
 ```
@@ -210,32 +210,32 @@ user, err := gormx.New[User]().FirstOrNil()
 ### `Last()`
 
 ```go
-user, err := gormx.New[User]().Last()
+user, err := gormz.New[User]().Last()
 ```
 
 ### `Get(id)`
 
 ```go
-user, err := gormx.New[User]().Get(1)
+user, err := gormz.New[User]().Get(1)
 ```
 
 ### `Find(field, value)`
 
 ```go
-user, err := gormx.New[User]().Find("email", "ali@test.com")
+user, err := gormz.New[User]().Find("email", "ali@test.com")
 ```
 
 ### `Count()`
 
 ```go
-count, err := gormx.New[User]().Count()
+count, err := gormz.New[User]().Count()
 // count = int64
 ```
 
 ### `Exists()`
 
 ```go
-exists, err := gormx.New[User]().Filter("id", 1).Exists()
+exists, err := gormz.New[User]().Filter("id", 1).Exists()
 // exists = bool
 ```
 
@@ -243,14 +243,14 @@ exists, err := gormx.New[User]().Filter("id", 1).Exists()
 
 ```go
 var names []string
-err := gormx.New[User]().Pluck("name", &names)
+err := gormz.New[User]().Pluck("name", &names)
 ```
 
 ### `ScanInto(dest)`
 
 ```go
 var results []CustomStruct
-err := gormx.New[User]().ScanInto(&results)
+err := gormz.New[User]().ScanInto(&results)
 ```
 
 ---
@@ -261,7 +261,7 @@ err := gormx.New[User]().ScanInto(&results)
 
 ```go
 user := &User{Name: "Ali"}
-err := gormx.New[User]().Create(user)
+err := gormz.New[User]().Create(user)
 // user.ID معيّن
 ```
 
@@ -269,19 +269,19 @@ err := gormx.New[User]().Create(user)
 
 ```go
 users := []User{{Name: "Ali"}, {Name: "Sara"}}
-err := gormx.New[User]().CreateMany(users)
+err := gormz.New[User]().CreateMany(users)
 ```
 
 ### `Save(item)`
 
 ```go
-err := gormx.New[User]().Save(user)
+err := gormz.New[User]().Save(user)
 ```
 
 ### `Update(id, field, value)`
 
 ```go
-err := gormx.New[User]().Update(1, "name", "New Name")
+err := gormz.New[User]().Update(1, "name", "New Name")
 ```
 
 ### `UpdateMany(values)`
@@ -289,7 +289,7 @@ err := gormx.New[User]().Update(1, "name", "New Name")
 ⚠️ **يتطلب conditions**:
 
 ```go
-affected, err := gormx.New[User]().
+affected, err := gormz.New[User]().
     Filter("active", false).
     UpdateMany(map[string]any{"deleted": true})
 ```
@@ -297,7 +297,7 @@ affected, err := gormx.New[User]().
 ### `Delete(id)`
 
 ```go
-err := gormx.New[User]().Delete(1)  // soft delete
+err := gormz.New[User]().Delete(1)  // soft delete
 ```
 
 ### `DeleteMany()`
@@ -305,7 +305,7 @@ err := gormx.New[User]().Delete(1)  // soft delete
 ⚠️ **يتطلب conditions**:
 
 ```go
-affected, err := gormx.New[User]().
+affected, err := gormz.New[User]().
     Filter("active", false).
     DeleteMany()
 ```
@@ -313,13 +313,13 @@ affected, err := gormx.New[User]().
 ### `HardDelete(id)`
 
 ```go
-err := gormx.New[User]().HardDelete(1)  // حذف نهائي
+err := gormz.New[User]().HardDelete(1)  // حذف نهائي
 ```
 
 ### `Restore(id)`
 
 ```go
-err := gormx.New[User]().Restore(1)  // استعادة
+err := gormz.New[User]().Restore(1)  // استعادة
 ```
 
 ---
@@ -329,20 +329,20 @@ err := gormx.New[User]().Restore(1)  // استعادة
 ### `Sum(field)`
 
 ```go
-total, err := gormx.New[Order]().Sum("total")
+total, err := gormz.New[Order]().Sum("total")
 ```
 
 ### `Avg(field)`
 
 ```go
-avg, err := gormx.New[Order]().Avg("total")
+avg, err := gormz.New[Order]().Avg("total")
 ```
 
 ### `Min(field)` / `Max(field)`
 
 ```go
-min, _ := gormx.New[Order]().Min("total")
-max, _ := gormx.New[Order]().Max("total")
+min, _ := gormz.New[Order]().Min("total")
+max, _ := gormz.New[Order]().Max("total")
 ```
 
 ---
@@ -352,7 +352,7 @@ max, _ := gormx.New[Order]().Max("total")
 **مهم**: كل method يرجّع نسخة جديدة:
 
 ```go
-base := gormx.New[User]().Filter("active", true)
+base := gormz.New[User]().Filter("active", true)
 
 adults := base.Filter("age__gte", 18)
 young := base.Filter("age__lt", 18)
@@ -371,10 +371,10 @@ youngCount, _ := young.Count()    // active + young
 
 ```go
 // Panic (للاستخدام الواثق)
-q := gormx.New[User]().Filter("bad field", "x")  // panic
+q := gormz.New[User]().Filter("bad field", "x")  // panic
 
 // Error (للمدخلات)
-q, err := gormx.New[User]().TryFilter("bad field", "x")
+q, err := gormz.New[User]().TryFilter("bad field", "x")
 if err != nil {
     log.Fatal(err)
 }
@@ -395,7 +395,7 @@ if err != nil {
 ### `ToSQL()`
 
 ```go
-sql, args := gormx.New[User]().Filter("active", true).ToSQL()
+sql, args := gormz.New[User]().Filter("active", true).ToSQL()
 fmt.Println(sql)   // SELECT * FROM users WHERE active = ?
 fmt.Println(args)  // [true]
 ```
@@ -403,13 +403,13 @@ fmt.Println(args)  // [true]
 ### `String()`
 
 ```go
-fmt.Println(gormx.New[User]().Filter("active", true).String())
+fmt.Println(gormz.New[User]().Filter("active", true).String())
 ```
 
 ### `DryRun()`
 
 ```go
-db := gormx.New[User]().Filter("active", true).DryRun()
+db := gormz.New[User]().Filter("active", true).DryRun()
 // db.Statement.SQL.String()
 ```
 
@@ -419,15 +419,15 @@ db := gormx.New[User]().Filter("active", true).DryRun()
 
 ```go
 // استعلام معقّد
-users, err := gormx.New[User]().
+users, err := gormz.New[User]().
     // فلترة
     Filter("active", true).
     Filter("age__gte", 18).
     Filter("status__in", []string{"verified", "premium"}).
     // Q builder
-    Q(gormx.QOr(
-        gormx.Eq("role", "admin"),
-        gormx.Eq("role", "user"),
+    Q(gormz.QOr(
+        gormz.Eq("role", "admin"),
+        gormz.Eq("role", "user"),
     )).
     // ترتيب
     OrderBy("-created_at", "name").

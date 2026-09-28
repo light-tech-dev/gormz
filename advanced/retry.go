@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/abdallah-elngar/gormx"
+	"github.com/light-tech-dev/gormz"
 	"gorm.io/gorm"
 )
 
@@ -41,7 +41,7 @@ func DefaultRetryConfig() RetryConfig {
 // Retry ينفّذ fn مع إعادة المحاولة.
 func Retry(ctx context.Context, cfg RetryConfig, fn func() error) error {
 	if fn == nil {
-		return fmt.Errorf("gormx/advanced: nil retry function")
+		return fmt.Errorf("gormz/advanced: nil retry function")
 	}
 	if cfg.MaxAttempts <= 0 {
 		cfg.MaxAttempts = 1
@@ -99,13 +99,13 @@ func Retry(ctx context.Context, cfg RetryConfig, fn func() error) error {
 		}
 	}
 
-	return fmt.Errorf("gormx/advanced: max attempts (%d) reached: %w", cfg.MaxAttempts, lastErr)
+	return fmt.Errorf("gormz/advanced: max attempts (%d) reached: %w", cfg.MaxAttempts, lastErr)
 }
 
 // RetryDB ينفّذ عملية DB مع retry.
 func RetryDB(ctx context.Context, fn func(db *gorm.DB) error) error {
 	if fn == nil {
-		return fmt.Errorf("gormx/advanced: nil retry function")
+		return fmt.Errorf("gormz/advanced: nil retry function")
 	}
 	cfg := DefaultRetryConfig()
 	return Retry(ctx, cfg, func() error {
@@ -116,11 +116,11 @@ func RetryDB(ctx context.Context, fn func(db *gorm.DB) error) error {
 // DBFromContextOrGlobal يستخرج DB من context أو يستخدم global.
 func DBFromContextOrGlobal(ctx context.Context) *gorm.DB {
 	if ctx != nil {
-		if i, ok := gormx.DBFromContext(ctx); ok {
+		if i, ok := gormz.DBFromContext(ctx); ok {
 			return i.DB()
 		}
 	}
-	return gormx.DB()
+	return gormz.DB()
 }
 
 // ═══════════════════════════════════════════════
@@ -205,7 +205,7 @@ func RetryWithBackoff(
 	fn func() error,
 ) error {
 	if fn == nil {
-		return fmt.Errorf("gormx/advanced: nil retry function")
+		return fmt.Errorf("gormz/advanced: nil retry function")
 	}
 	if maxAttempts <= 0 {
 		maxAttempts = 3
@@ -250,5 +250,5 @@ func RetryWithBackoff(
 		}
 	}
 
-	return fmt.Errorf("gormx/advanced: max attempts (%d) reached: %w", maxAttempts, lastErr)
+	return fmt.Errorf("gormz/advanced: max attempts (%d) reached: %w", maxAttempts, lastErr)
 }

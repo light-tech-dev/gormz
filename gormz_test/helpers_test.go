@@ -1,10 +1,10 @@
-package gormx_test
+package gormz_test
 
 import (
 	"testing"
 
-	"github.com/abdallah-elngar/gormx"
-	"github.com/abdallah-elngar/gormx/tests/fixtures"
+	"github.com/light-tech-dev/gormz"
+	"github.com/light-tech-dev/gormz/tests/fixtures"
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -33,15 +33,15 @@ func setupTestDB(t *testing.T) {
 
 	require.NoError(t, db.AutoMigrate(&User{}, &Order{}, &Product{}))
 
-	gormx.SetDB(db)
-	gormx.ClearRegistry()
+	gormz.SetDB(db)
+	gormz.ClearRegistry()
 
 	t.Cleanup(func() {
 		if sqlDB, err := db.DB(); err == nil && sqlDB != nil {
 			_ = sqlDB.Close()
 		}
-		gormx.ResetDB()
-		gormx.ClearRegistry()
+		gormz.ResetDB()
+		gormz.ClearRegistry()
 	})
 }
 
@@ -57,7 +57,7 @@ func seedUsers(t *testing.T) []User {
 	}
 
 	for i := range users {
-		require.NoError(t, gormx.New[User]().Create(&users[i]))
+		require.NoError(t, gormz.New[User]().Create(&users[i]))
 	}
 
 	return users
@@ -72,6 +72,6 @@ func seedOrders(t *testing.T, userID uint) []Order {
 		{UserID: userID, Total: 50.00, Status: "paid"},
 	}
 
-	require.NoError(t, gormx.New[Order]().CreateMany(orders))
+	require.NoError(t, gormz.New[Order]().CreateMany(orders))
 	return orders
 }

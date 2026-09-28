@@ -2,7 +2,7 @@
 21. Performance Tuning — تحسين الأداء
 ═══════════════════════════════════════════════════════════════════
 
-نصائح لتحسين أداء gormx في الإنتاج.
+نصائح لتحسين أداء gormz في الإنتاج.
 
 ───────────────────────────────────────────────────────────────────
 21.1 ضبط Connection Pool
@@ -10,7 +10,7 @@
 
 إعدادات pool المناسبة تحدد الأداء بشكل كبير.
 
-    cfg := gormx.DefaultConfig()
+    cfg := gormz.DefaultConfig()
 
     // للإنتاج — خوادم قوية
     cfg.MaxOpenConns = 100       // الحد الأقصى للاتصالات المفتوحة
@@ -18,7 +18,7 @@
     cfg.ConnMaxLifetime = 2 * time.Hour  // أعد إنشاء الاتصالات كل ساعتين
     cfg.ConnMaxIdleTime = 30 * time.Minute
 
-    gormx.Configure(cfg)
+    gormz.Configure(cfg)
 
 القواعد الأساسية:
 
@@ -42,7 +42,7 @@
 21.2 PrepareStmt — تحضير الاستعلامات
 ───────────────────────────────────────────────────────────────────
 
-    cfg := gormx.DefaultConfig()
+    cfg := gormz.DefaultConfig()
     cfg.PrepareStmt = true  // ⚡ أسرع للاستعلامات المتكررة
 
     // قبل: ~500µs
@@ -55,11 +55,11 @@
 ───────────────────────────────────────────────────────────────────
 
     // ❌ بطيء — يجلب كل الأعمدة
-    users, _ := gormx.New[User]().All()
+    users, _ := gormz.New[User]().All()
     // SELECT * FROM users
 
     // ✅ سريع — يجلب فقط ما تحتاجه
-    users, _ := gormx.New[User]().
+    users, _ := gormz.New[User]().
         Select("id", "name", "email").
         All()
     // SELECT id, name, email FROM users
@@ -76,13 +76,13 @@
 ───────────────────────────────────────────────────────────────────
 
     // ❌ خطر — كل السجلات في الذاكرة
-    users, _ := gormx.New[User]().All()
+    users, _ := gormz.New[User]().All()
 
     // ✅ آمن — صفحة بصفحة
-    page, _ := gormx.New[User]().Paginate(1, 20)
+    page, _ := gormz.New[User]().Paginate(1, 20)
 
     // ✅ أو Limit + Offset
-    users, _ := gormx.New[User]().
+    users, _ := gormz.New[User]().
         OrderBy("-created_at").
         Limit(100).
         All()
@@ -113,7 +113,7 @@
 21.6 استخدم EXPLAIN للتحليل
 ───────────────────────────────────────────────────────────────────
 
-    sql, args := gormx.New[User]().
+    sql, args := gormz.New[User]().
         Filter("active", true).
         Filter("age__gte", 18).
         ToSQL()
@@ -130,12 +130,12 @@
 
     // ❌ بطيء جدًا — 100,000 استعلام
     for _, user := range users {
-        gormx.New[User]().Create(&user)
+        gormz.New[User]().Create(&user)
     }
     // ~500 ثانية
 
     // ✅ سريع — دفعات
-    gormx.New[User]().CreateInBatches(users, 1000)
+    gormz.New[User]().CreateInBatches(users, 1000)
     // ~2 ثانية (250x أسرع)
 
     // ✅✅ الأسرع — Bulk Insert
@@ -147,15 +147,15 @@
 ───────────────────────────────────────────────────────────────────
 
     // ❌ N+1 queries — بطيء
-    users, _ := gormx.New[User]().All()
+    users, _ := gormz.New[User]().All()
     for _, u := range users {
-        orders, _ := gormx.New[Order]().Filter("user_id", u.ID).All()
+        orders, _ := gormz.New[Order]().Filter("user_id", u.ID).All()
         // استعلام لكل مستخدم!
     }
     // 1 + N استعلام
 
     // ✅ Preload — استعلامان فقط
-    users, _ := gormx.New[User]().Preload("Orders").All()
+    users, _ := gormz.New[User]().Preload("Orders").All()
     // 2 استعلامات فقط
 
 ───────────────────────────────────────────────────────────────────
@@ -163,14 +163,14 @@
 ───────────────────────────────────────────────────────────────────
 
     // ❌ COUNT على كل طلب
-    count, _ := gormx.New[User]().Count()
+    count, _ := gormz.New[User]().Count()
     // ~100ms على مليون سجل
 
     // ✅ Cache النتيجة
     var userCount int64
     cache.Get("user_count", &userCount)
     if userCount == 0 {
-        userCount, _ = gormx.New[User]().Count()
+        userCount, _ = gormz.New[User]().Count()
         cache.Set("user_count", userCount, 5*time.Minute)
     }
 
@@ -182,7 +182,7 @@
     ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
     defer cancel()
 
-    users, err := gormx.New[User]().
+    users, err := gormz.New[User]().
         WithContext(ctx).
         Filter("active", true).
         All()
@@ -207,10 +207,10 @@
 
 مقارنة مع GORM:
 
-    BenchmarkVsGORM/gormx-8      50000     28,901 ns/op      512 B/op    6 allocs/op
+    BenchmarkVsGORM/gormz-8      50000     28,901 ns/op      512 B/op    6 allocs/op
     BenchmarkVsGORM/gorm-8       45000     31,234 ns/op      678 B/op    8 allocs/op
 
-    → gormx أسرع بنسبة ~8% (فضل prepareStmt caching)
+    → gormz أسرع بنسبة ~8% (فضل prepareStmt caching)
 
 ───────────────────────────────────────────────────────────────────
 21.12 Checklist للأداء
@@ -346,8 +346,8 @@ docker-compose.yml:
         _ = godotenv.Load()  // يُحمّل .env إن وُجد
     }
 
-    func loadConfig() *gormx.Config {
-        cfg := gormx.DefaultConfig()
+    func loadConfig() *gormz.Config {
+        cfg := gormz.DefaultConfig()
 
         if v := os.Getenv("DB_MAX_OPEN_CONNS"); v != "" {
             if n, err := strconv.Atoi(v); err == nil {
@@ -476,7 +476,7 @@ deployment.yaml:
         // Readiness — هل التطبيق جاهز للطلبات؟
         app.Get("/ready", func(c *fiber.Ctx) error {
             // فحص DB
-            if err := gormx.Ping(); err != nil {
+            if err := gormz.Ping(); err != nil {
                 return c.Status(503).JSON(fiber.Map{
                     "status": "not_ready",
                     "error":  "database unavailable",
@@ -522,7 +522,7 @@ deployment.yaml:
         }
 
         // إغلاق DB
-        if err := gormx.Close(); err != nil {
+        if err := gormz.Close(); err != nil {
             log.Fatal("DB close error:", err)
         }
 
@@ -688,18 +688,18 @@ Prometheus metrics:
 23.1 مشاكل شائعة وحلولها
 ───────────────────────────────────────────────────────────────────
 
-❌ Problem: "gormx: DB not initialized"
+❌ Problem: "gormz: DB not initialized"
 
     السبب: SetDB لم يُنادى قبل الاستعلام
 
     الحل:
     func main() {
         db, _ := gorm.Open(...)
-        gormx.SetDB(db)  // ← قبل أي استخدام!
+        gormz.SetDB(db)  // ← قبل أي استخدام!
         // ...
     }
 
-❌ Problem: "gormx: invalid field name"
+❌ Problem: "gormz: invalid field name"
 
     السبب: اسم الحقل غير صحيح
 
@@ -719,23 +719,23 @@ Prometheus metrics:
 
     الحل:
     // ❌
-    gormx.New[User]().DeleteMany()
+    gormz.New[User]().DeleteMany()
 
     // ✅
-    gormx.New[User]().Filter("active", false).DeleteMany()
+    gormz.New[User]().Filter("active", false).DeleteMany()
 
 ❌ Problem: "record not found"
 
     السبب: First/Get لم يجد سجلًا
 
     الحل:
-    user, err := gormx.New[User]().Get(1)
-    if gormx.IsNotFound(err) {
+    user, err := gormz.New[User]().Get(1)
+    if gormz.IsNotFound(err) {
         // تعامل مع عدم الوجود
     }
 
     // أو استخدم GetOrNil
-    user, err := gormx.New[User]().GetOrNil(1)
+    user, err := gormz.New[User]().GetOrNil(1)
     if user == nil {
         // غير موجود
     }
@@ -746,7 +746,7 @@ Prometheus metrics:
 
     الحل:
     // فحص أولًا
-    exists, _ := gormx.New[User]().Filter("email", email).Exists()
+    exists, _ := gormz.New[User]().Filter("email", email).Exists()
     if exists {
         return errors.New("email already exists")
     }
@@ -783,16 +783,16 @@ Prometheus metrics:
 
     المشكلة:
     for _, user := range users {
-        orders, _ := gormx.New[Order]().Filter("user_id", user.ID).All()
+        orders, _ := gormz.New[Order]().Filter("user_id", user.ID).All()
     }
 
     الحل:
-    users, _ := gormx.New[User]().Preload("Orders").All()
+    users, _ := gormz.New[User]().Preload("Orders").All()
 
 ❌ Connection pool exhausted
 
     الحل:
-    cfg := gormx.DefaultConfig()
+    cfg := gormz.DefaultConfig()
     cfg.MaxOpenConns = 100    // زد العدد
     cfg.ConnMaxLifetime = 30 * time.Minute
 
@@ -812,10 +812,10 @@ Prometheus metrics:
 
 ❌ Race conditions في QuerySet
 
-    gormx آمن — QuerySet immutable
+    gormz آمن — QuerySet immutable
 
     // ✅ آمن
-    base := gormx.New[User]().Filter("active", true)
+    base := gormz.New[User]().Filter("active", true)
 
     go func() {
         users, _ := base.Filter("age__gte", 18).All()
@@ -843,11 +843,11 @@ Prometheus metrics:
 
 ❌ خطأ غير واضح
 
-    ferr := gormx.NewValidationError("field", "reason")
-    // gormx: invalid field "field": reason
+    ferr := gormz.NewValidationError("field", "reason")
+    // gormz: invalid field "field": reason
 
     // استخدم As للحصول على التفاصيل:
-    var ve *gormx.ValidationError
+    var ve *gormz.ValidationError
     if errors.As(err, &ve) {
         log.Printf("Field: %s, Reason: %s", ve.Field, ve.Reason)
     }
@@ -856,7 +856,7 @@ Prometheus metrics:
 
     // ❌ خطأ
     advanced.WithTransaction(ctx, cfg, func(tx *advanced.Tx) error {
-        gormx.New[User]().Create(&user)  // ← بدون فحص!
+        gormz.New[User]().Create(&user)  // ← بدون فحص!
         return nil  // ← يبدو ناجحًا
     })
 
@@ -879,7 +879,7 @@ Prometheus metrics:
     الحل:
     // استخدم نفس النوع
     var users []User
-    err := gormx.New[User]().All().ScanInto(&users)
+    err := gormz.New[User]().All().ScanInto(&users)
 
 ❌ Method not found
 
@@ -887,7 +887,7 @@ Prometheus metrics:
 
     الحل:
     // تحقق من godoc
-    go doc gormx.QuerySet
+    go doc gormz.QuerySet
 
     // أو في IDE:
     // ctrl+click على QuerySet
@@ -926,7 +926,7 @@ Tip 4: Context với timeout قصير للاختبار
 Q: "My migration is not applying"
 
 A: تحقق من:
-    1. gormx.MustMigrate[User]() يُنادى؟
+    1. gormz.MustMigrate[User]() يُنادى؟
     2. الموديل مُصدَّر (capitalized)؟
     3. GORM tag صحيح؟
 
@@ -959,18 +959,18 @@ A: استخدم:
 ═══════════════════════════════════════════════════════════════════
 
 ───────────────────────────────────────────────────────────────────
-24.1 معمارية gormx
+24.1 معمارية gormz
 ───────────────────────────────────────────────────────────────────
 
     ┌─────────────────────────────────────────────────────────┐
     │                    USER CODE                             │
     │                                                          │
-    │   gormx.New[User]().Filter("active", true).All()        │
+    │   gormz.New[User]().Filter("active", true).All()        │
     └──────────────────────┬──────────────────────────────────┘
                            │
                            ▼
     ┌─────────────────────────────────────────────────────────┐
-    │                  gormx (Public API)                      │
+    │                  gormz (Public API)                      │
     │                                                          │
     │   ┌─────────────────────────────────────────────────┐  │
     │   │           QuerySet[T]                            │  │
@@ -1038,7 +1038,7 @@ A: استخدم:
 24.2 QuerySet Lifecycle
 ───────────────────────────────────────────────────────────────────
 
-    gormx.New[User]()
+    gormz.New[User]()
          │
          ▼
     ┌─────────────┐
@@ -1081,7 +1081,7 @@ A: استخدم:
     └─────────────┘
 
 ───────────────────────────────────────────────────────────────────
-24.3 Django Lookups Flow
+24.3 Advanced Lookups Flow
 ───────────────────────────────────────────────────────────────────
 
     Filter("age__gte", 18)
@@ -1190,22 +1190,22 @@ A: استخدم:
 
     error
       │
-      ├── gormx.NotFoundError
+      ├── gormz.NotFoundError
       │     └── Unwrap() → gorm.ErrRecordNotFound
       │
-      ├── gormx.ValidationError
-      │     └── Unwrap() → gormx.ErrInvalidField
+      ├── gormz.ValidationError
+      │     └── Unwrap() → gormz.ErrInvalidField
       │
-      ├── gormx.DangerousOperationError
-      │     └── Unwrap() → gormx.ErrDangerousOperation
+      ├── gormz.DangerousOperationError
+      │     └── Unwrap() → gormz.ErrDangerousOperation
       │
-      ├── gormx.ErrNotInitialized
-      ├── gormx.ErrNilDB
-      ├── gormx.ErrAlreadyRegistered
-      └── gormx.ErrNotFoundInRegistry
+      ├── gormz.ErrNotInitialized
+      ├── gormz.ErrNilDB
+      ├── gormz.ErrAlreadyRegistered
+      └── gormz.ErrNotFoundInRegistry
 
     الاستخدام:
-    errors.Is(err, gormx.ErrNotFound)     ✅
+    errors.Is(err, gormz.ErrNotFound)     ✅
     errors.Is(err, gorm.ErrRecordNotFound) ✅ (بفضل Unwrap)
     errors.As(err, &notFoundError)         ✅
 
@@ -1322,7 +1322,7 @@ A: استخدم:
 
     // Unit Test (80%)
     func TestFilter_Valid(t *testing.T) {
-        q, err := gormx.New[User]().TryFilter("age__gt", 18)
+        q, err := gormz.New[User]().TryFilter("age__gt", 18)
         require.NoError(t, err)
         // ...
     }
@@ -1331,7 +1331,7 @@ A: استخدم:
     func TestUserCRUD(t *testing.T) {
         setupTestDB(t)  // real SQLite
         user := &User{...}
-        require.NoError(t, gormx.New[User]().Create(user))
+        require.NoError(t, gormz.New[User]().Create(user))
         // ...
     }
 
@@ -1362,7 +1362,7 @@ A: استخدم:
            │
            ▼
     ┌──────────────────────────────┐
-    │  gormx QuerySet              │
+    │  gormz QuerySet              │
     │                              │
     │  New[User]()                 │
     │    .Filter("active", true)   │
@@ -1415,7 +1415,7 @@ A: استخدم:
                            الخاتمة
 ═══════════════════════════════════════════════════════════════════
 
-شكرًا لاستخدامك gormx!
+شكرًا لاستخدامك gormz!
 
 الآن لديك دوكيمنتشن كاملة تشمل:
 
@@ -1431,9 +1431,9 @@ A: استخدم:
     ✅ FAQ
 
 للأسئلة، الاقتراحات، أو الإبلاغ عن أخطاء:
-    GitHub: https://github.com/abdallah-elngar/gormx
-    Issues: https://github.com/abdallah-elngar/gormx/issues
-    Discussions: https://github.com/abdallah-elngar/gormx/discussions
+    GitHub: https://github.com/light-tech-dev/gormz
+    Issues: https://github.com/light-tech-dev/gormz/issues
+    Discussions: https://github.com/light-tech-dev/gormz/discussions
 
 ═══════════════════════════════════════════════════════════════════
 
@@ -1445,7 +1445,7 @@ A: استخدم:
 
                           نهاية الدوكيمنتشن
 
-                          gormx v0.1.0
+                          gormz v0.1.0
                           MIT License
                           © 2025 Sanad Team
 

@@ -1,10 +1,10 @@
-package gormx_test
+package gormz_test
 
 import (
 	"fmt"
 	"testing"
 
-	"github.com/abdallah-elngar/gormx"
+	"github.com/light-tech-dev/gormz"
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -17,8 +17,8 @@ import (
 
 // ExampleNew demonstrates the basic usage.
 func ExampleNew() {
-	gormx.ResetDB()
-	gormx.ClearRegistry()
+	gormz.ResetDB()
+	gormz.ClearRegistry()
 
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
@@ -29,14 +29,14 @@ func ExampleNew() {
 	if err := db.AutoMigrate(&User{}); err != nil {
 		panic(err)
 	}
-	gormx.SetDB(db)
+	gormz.SetDB(db)
 
 	user := &User{Name: "Ali", Email: "ali@test.com"}
-	if err := gormx.New[User]().Create(user); err != nil {
+	if err := gormz.New[User]().Create(user); err != nil {
 		panic(err)
 	}
 
-	users, err := gormx.New[User]().
+	users, err := gormz.New[User]().
 		Filter("name", "Ali").
 		All()
 	if err != nil {
@@ -49,8 +49,8 @@ func ExampleNew() {
 
 // ExampleQuerySet_Filter demonstrates filters.
 func ExampleQuerySet_Filter() {
-	gormx.ResetDB()
-	gormx.ClearRegistry()
+	gormz.ResetDB()
+	gormz.ClearRegistry()
 
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
@@ -61,19 +61,19 @@ func ExampleQuerySet_Filter() {
 	if err := db.AutoMigrate(&User{}); err != nil {
 		panic(err)
 	}
-	gormx.SetDB(db)
+	gormz.SetDB(db)
 
-	if err := gormx.New[User]().Create(&User{Name: "Ali", Email: "ali@test.com", Age: 30, Active: true}); err != nil {
+	if err := gormz.New[User]().Create(&User{Name: "Ali", Email: "ali@test.com", Age: 30, Active: true}); err != nil {
 		panic(err)
 	}
-	if err := gormx.New[User]().Create(&User{Name: "Sara", Email: "sara@test.com", Age: 25, Active: true}); err != nil {
+	if err := gormz.New[User]().Create(&User{Name: "Sara", Email: "sara@test.com", Age: 25, Active: true}); err != nil {
 		panic(err)
 	}
-	if err := gormx.New[User]().Create(&User{Name: "Omar", Email: "omar@test.com", Age: 17, Active: false}); err != nil {
+	if err := gormz.New[User]().Create(&User{Name: "Omar", Email: "omar@test.com", Age: 17, Active: false}); err != nil {
 		panic(err)
 	}
 
-	adults, err := gormx.New[User]().
+	adults, err := gormz.New[User]().
 		Filter("active", true).
 		Filter("age__gte", 18).
 		All()
@@ -87,8 +87,8 @@ func ExampleQuerySet_Filter() {
 
 // ExampleRegister demonstrates the model registry.
 func ExampleRegister() {
-	gormx.ResetDB()
-	gormx.ClearRegistry()
+	gormz.ResetDB()
+	gormz.ClearRegistry()
 
 	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
@@ -99,17 +99,17 @@ func ExampleRegister() {
 	if err := db.AutoMigrate(&User{}); err != nil {
 		panic(err)
 	}
-	gormx.SetDB(db)
-	gormx.ClearRegistry()
+	gormz.SetDB(db)
+	gormz.ClearRegistry()
 
 	// Register model
-	Users := gormx.Register[User]("user")
+	Users := gormz.Register[User]("user")
 	if err := Users.Create(&User{Name: "Ali", Email: "ali@test.com"}); err != nil {
 		panic(err)
 	}
 
 	// Lookup by name
-	q := gormx.MustLookup[User]("user")
+	q := gormz.MustLookup[User]("user")
 	users, err := q.All()
 	if err != nil {
 		panic(err)
@@ -129,19 +129,19 @@ func TestExample_RealWorld(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NoError(t, db.AutoMigrate(&User{}, &Order{}))
-	gormx.SetDB(db)
+	gormz.SetDB(db)
 
 	t.Cleanup(func() {
 		if sqlDB, err := db.DB(); err == nil && sqlDB != nil {
 			_ = sqlDB.Close()
 		}
-		gormx.ResetDB()
-		gormx.ClearRegistry()
+		gormz.ResetDB()
+		gormz.ClearRegistry()
 	})
 
 	// Create user
 	user := &User{Name: "Ali", Email: "ali@test.com", Age: 30}
-	require.NoError(t, gormx.New[User]().Create(user))
+	require.NoError(t, gormz.New[User]().Create(user))
 
 	// Create orders
 	orders := []Order{
@@ -149,10 +149,10 @@ func TestExample_RealWorld(t *testing.T) {
 		{UserID: user.ID, Total: 200.00, Status: "pending"},
 		{UserID: user.ID, Total: 50.00, Status: "paid"},
 	}
-	require.NoError(t, gormx.New[Order]().CreateMany(orders))
+	require.NoError(t, gormz.New[Order]().CreateMany(orders))
 
 	// Sum paid orders
-	total, err := gormx.New[Order]().
+	total, err := gormz.New[Order]().
 		Filter("user_id", user.ID).
 		Filter("status", "paid").
 		Sum("total")

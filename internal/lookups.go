@@ -104,7 +104,24 @@ func BuildLookupWithDialect(field string, value any, negate bool, dialect Dialec
 			dialect,
 		), nil
 
-	// Date lookups
+	// ═══ Regex lookups ═══
+	case "regex":
+		return newLookup(
+			regexFunc(dialect, col),
+			toString(value),
+			negate,
+			dialect,
+		), nil
+
+	case "iregex":
+		return newLookup(
+			regexFunc(dialect, lowerFunc(dialect, col)),
+			strings.ToLower(toString(value)),
+			negate,
+			dialect,
+		), nil
+
+	// ═══ Date lookups ═══
 	case "year":
 		return newLookup(dateExtract(dialect, "year", col)+" = ?", value, negate, dialect), nil
 	case "month":
@@ -117,6 +134,7 @@ func BuildLookupWithDialect(field string, value any, negate bool, dialect Dialec
 	}
 }
 
+// newLookup ينشئ Lookup مع args موحّدة.
 func newLookup(sql string, args any, negate bool, dialect Dialect) *Lookup {
 	l := &Lookup{SQL: sql, Negate: negate, Dialect: dialect}
 	if args == nil {
@@ -131,6 +149,7 @@ func newLookup(sql string, args any, negate bool, dialect Dialect) *Lookup {
 	return l
 }
 
+// buildInLookup يبني IN/NOT IN lookup.
 func buildInLookup(col string, value any, negate bool, dialect Dialect) (*Lookup, error) {
 	rv := reflect.ValueOf(value)
 	if rv.Kind() != reflect.Slice && rv.Kind() != reflect.Array {
@@ -159,10 +178,51 @@ func buildInLookup(col string, value any, negate bool, dialect Dialect) (*Lookup
 	}, nil
 }
 
+// ═══════════════════════════════════════════════
+// Dialect-aware Helpers
+// ═══════════════════════════════════════════════
+
 // lowerFunc يرجّع دالة lower حسب dialect.
+//
+// جميع dialects تدعم LOWER() — لا حاجة لتبديل.
 func lowerFunc(dialect Dialect, col string) string {
-	// جميع dialects تدعم LOWER()
 	return "LOWER(" + col + ")"
+}
+
+// regexFunc يرجّع تعبير regex حسب dialect.
+//
+// ⚠️ SQLite:
+//   - الافتراضي: REGEXP — لكن يحتاج دالة مخصصة (register_function)
+//   - البديل: GLOB — لا يحتاج دالة، لكن syntax مختلف
+//
+// ⚠️ PostgreSQL: ~ (case-sensitive)، ~* (case-insensitive)
+//
+// ⚠️ MySQL: REGEXP، REGEXP BINARY
+func regexFunc(dialect Dialect, col string) string {
+	switch dialect {
+	case DialectSQLite:
+		// SQLite لا يدعم REGEXP افتراضيًا
+		// المستخدم يحتاج تسجيل دالة REGEXP عبر:
+		//   db.ConnPool.(*sqlite3.SQLiteConn).RegisterFunc("regexp", ...)
+		//
+		// أو استخدام GLOB (لكن syntax مختلف)
+		//
+		// نستخدم REGEXP — المسؤولية على المستخدم
+		return col + " REGEXP ?"
+
+	case DialectPostgres:
+		// PostgreSQL: ~ للمطابقة الحساسة للحالة
+		return col + " ~ ?"
+
+	case DialectMySQL:
+		// MySQL: REGEXP للمطابقة الحساسة للحالة
+		return col + " REGEXP ?"
+
+	default:
+		// ISO SQL لا يعرّف regex
+		// نستخدم REGEXP كافتراض
+		return col + " REGEXP ?"
+	}
 }
 
 // dateExtract يرجّع تعبير استخراج التاريخ حسب dialect.
@@ -195,6 +255,7 @@ func dateExtract(dialect Dialect, part, col string) string {
 	}
 }
 
+// toString يحوّل value إلى string.
 func toString(v any) string {
 	if v == nil {
 		return ""

@@ -1,4 +1,4 @@
-// Package internal provides internal helpers for gormx.
+// Package internal provides internal helpers for gormz.
 package internal
 
 import (

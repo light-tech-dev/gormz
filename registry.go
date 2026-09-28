@@ -1,4 +1,4 @@
-package gormx
+package gormz
 
 import (
 	"fmt"
@@ -24,7 +24,7 @@ var registry = struct {
 // Register يسجّل QuerySet لموديل باسم معين.
 // يpanic عند التكرار — استخدم TryRegister للتحكم.
 //
-//	var Objects = gormx.Register[Product]("product")
+//	var Objects = gormz.Register[Product]("product")
 func Register[T any](name string) *QuerySet[T] {
 	q, err := TryRegister[T](name)
 	if err != nil {
@@ -35,7 +35,7 @@ func Register[T any](name string) *QuerySet[T] {
 
 // TryRegister مثل Register لكن يرجّع الخطأ.
 //
-//	q, err := gormx.TryRegister[Product]("product")
+//	q, err := gormz.TryRegister[Product]("product")
 //	if err != nil {
 //	    log.Fatal(err)
 //	}
@@ -302,7 +302,7 @@ func typeNameOf(v any) string {
 		inner := fullName[start+1 : end]
 
 		// احذف package path
-		// github.com/abdallah-elngar/gormx/tests/fixtures.User → User
+		// github.com/light-tech-dev/gormz/tests/fixtures.User → User
 		if idx := strings.LastIndex(inner, "."); idx >= 0 {
 			inner = inner[idx+1:]
 		}
@@ -373,7 +373,7 @@ func RegisterBatch(entries map[string]any) error {
 	// تحقق أولًا (atomicity)
 	for name := range entries {
 		if name == "" {
-			return fmt.Errorf("gormx: empty registry name")
+			return fmt.Errorf("gormz: empty registry name")
 		}
 		if _, exists := registry.models[name]; exists {
 			return fmt.Errorf("%w: %q", ErrAlreadyRegistered, name)

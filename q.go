@@ -1,373 +1,116 @@
-package gormx
+package gormz
 
 import (
 	"strings"
 
-	"github.com/abdallah-elngar/gormx/internal"
+	"github.com/light-tech-dev/gormz/internal"
 )
 
 // ═══════════════════════════════════════════════
-// Q Builder — لبناء شروط معقدة (AND / OR / NOT)
+// Clause — Interface لكل الشروط
+// ═══════════════════════════════════════════════
+
+// Clause هو أي شرط يمكن تحويله إلى SQL.
+//
+// كل من WhereClause, NotClause, RawClause, *Q يطبّق هذه الواجهة.
+type Clause interface {
+	ToSQL() (string, []any)
+	IsNegated() bool
+}
+
+// ═══════════════════════════════════════════════
+// WhereClause — شرط WHERE
+// ═══════════════════════════════════════════════
+
+// WhereClause يمثل شرط WHERE بسيط.
+//
+// يُنشأ عبر Eq, Ne, Gt, ...
+type WhereClause struct {
+	sql  string
+	args []any
+}
+
+// ToSQL يرجّع SQL + args.
+func (w WhereClause) ToSQL() (string, []any) {
+	return w.sql, w.args
+}
+
+// IsNegated يرجّع false.
+func (w WhereClause) IsNegated() bool { return false }
+
+// IsEmpty يفحص إذا كان فارغًا.
+func (w WhereClause) IsEmpty() bool { return w.sql == "" }
+
+// SQL يرجّع SQL الخام (للتصحيح).
+func (w WhereClause) SQL() string { return w.sql }
+
+// Args يرجّع الـ args (للتصحيح).
+func (w WhereClause) Args() []any { return w.args }
+
+// ═══════════════════════════════════════════════
+// NotClause — نفي شرط
+// ═══════════════════════════════════════════════
+
+// NotClause يمثل NOT (...) على شرط.
+type NotClause struct {
+	inner Clause
+}
+
+// ToSQL يرجّع SQL + args.
+func (n NotClause) ToSQL() (string, []any) {
+	if n.inner == nil {
+		return "1=1", nil
+	}
+	sql, args := n.inner.ToSQL()
+	return "NOT (" + sql + ")", args
+}
+
+// IsNegated يرجّع true.
+func (n NotClause) IsNegated() bool { return true }
+
+// ═══════════════════════════════════════════════
+// RawClause — SQL خام (exported alias)
+// ═══════════════════════════════════════════════
+
+// RawClause يمثل SQL خام.
+//
+// ⚠️ المسؤولية على المستخدم — لا validation.
+type RawClause = internal.RawClause
+
+// Raw ينشئ RawClause.
+//
+// مثال:
+//
+//	gormz.Raw("age > ? AND status = ?", 18, "active")
+func Raw(sql string, args ...any) RawClause {
+	return internal.RawClause{SQL: sql, Args: args}
+}
+
+// ═══════════════════════════════════════════════
+// Q — مجموعة شروط
 // ═══════════════════════════════════════════════
 
 // Q يمثل مجموعة شروط.
 //
 // مثال:
 //
-//	q := gormx.QOr(
-//	    gormx.Eq("status", "active"),
-//	    gormx.Eq("status", "pending"),
+//	q := gormz.Or(
+//	    gormz.Eq("status", "active"),
+//	    gormz.Eq("status", "pending"),
 //	)
-//	users, _ := gormx.New[User]().Q(q).All()
+//	users, _ := gormz.New[User]().Q(q).All()
 type Q struct {
 	op       string
-	children []any
+	children []Clause
 }
 
-// ToSQL يحوّل Q إلى SQL + args (للتصحيح).
+// ToSQL يحوّل Q إلى SQL + args.
 func (q *Q) ToSQL() (string, []any) {
 	return q.toSQL()
 }
 
-// toSQL داخلي.
-func (q *Q) toSQL() (string, []any) {
-	if q == nil || len(q.children) == 0 {
-		return "1=1", nil
-	}
-
-	parts := make([]string, 0, len(q.children))
-	var args []any
-
-	for _, c := range q.children {
-		switch v := c.(type) {
-		case whereClause:
-			parts = append(parts, v.sql)
-			args = append(args, v.args...)
-		case notClause:
-			parts = append(parts, "NOT ("+v.sql+")")
-			args = append(args, v.args...)
-		case internal.RawClause:
-			parts = append(parts, v.SQL)
-			args = append(args, v.Args...)
-		case *Q:
-			sql, a := v.toSQL()
-			parts = append(parts, "("+sql+")")
-			args = append(args, a...)
-		}
-	}
-
-	sep := " " + q.op + " "
-	return strings.Join(parts, sep), args
-}
-
-// deepCopy نسخة عميقة للـ Q.
-func (q *Q) deepCopy() *Q {
-	if q == nil {
-		return nil
-	}
-	nq := &Q{op: q.op, children: make([]any, len(q.children))}
-	for i, c := range q.children {
-		if sub, ok := c.(*Q); ok {
-			nq.children[i] = sub.deepCopy()
-		} else {
-			nq.children[i] = c
-		}
-	}
-	return nq
-}
-
-// ═══════════════════════════════════════════════
-// Clauses — خاصة بـ gormx
-// ═══════════════════════════════════════════════
-
-type whereClause struct {
-	sql  string
-	args []any
-}
-
-type notClause struct {
-	sql  string
-	args []any
-}
-
-// ═══════════════════════════════════════════════
-// Public Lookup Constructors
-// ═══════════════════════════════════════════════
-//
-// ملاحظة: كل الدوال panic على حقل غير صحيح.
-// استخدم الإصدارات *Err للتحكم.
-
-// Eq → field = value. Panics on invalid field.
-func Eq(field string, value any) whereClause {
-	c, _ := EqErr(field, value)
-	return c
-}
-
-// EqErr مثل Eq لكن يرجّع خطأ.
-func EqErr(field string, value any) (whereClause, error) {
-	if err := internal.ValidateField(field); err != nil {
-		return whereClause{}, err
-	}
-	return whereClause{sql: field + " = ?", args: []any{value}}, nil
-}
-
-// Ne → field != value. Panics.
-func Ne(field string, value any) whereClause {
-	c, _ := NeErr(field, value)
-	return c
-}
-
-// NeErr مثل Ne.
-func NeErr(field string, value any) (whereClause, error) {
-	if err := internal.ValidateField(field); err != nil {
-		return whereClause{}, err
-	}
-	return whereClause{sql: field + " != ?", args: []any{value}}, nil
-}
-
-// Gt → field > value.
-func Gt(field string, value any) whereClause {
-	c, _ := GtErr(field, value)
-	return c
-}
-
-// GtErr مثل Gt.
-func GtErr(field string, value any) (whereClause, error) {
-	if err := internal.ValidateField(field); err != nil {
-		return whereClause{}, err
-	}
-	return whereClause{sql: field + " > ?", args: []any{value}}, nil
-}
-
-// Gte → field >= value.
-func Gte(field string, value any) whereClause {
-	c, _ := GteErr(field, value)
-	return c
-}
-
-// GteErr مثل Gte.
-func GteErr(field string, value any) (whereClause, error) {
-	if err := internal.ValidateField(field); err != nil {
-		return whereClause{}, err
-	}
-	return whereClause{sql: field + " >= ?", args: []any{value}}, nil
-}
-
-// Lt → field < value.
-func Lt(field string, value any) whereClause {
-	c, _ := LtErr(field, value)
-	return c
-}
-
-// LtErr مثل Lt.
-func LtErr(field string, value any) (whereClause, error) {
-	if err := internal.ValidateField(field); err != nil {
-		return whereClause{}, err
-	}
-	return whereClause{sql: field + " < ?", args: []any{value}}, nil
-}
-
-// Lte → field <= value.
-func Lte(field string, value any) whereClause {
-	c, _ := LteErr(field, value)
-	return c
-}
-
-// LteErr مثل Lte.
-func LteErr(field string, value any) (whereClause, error) {
-	if err := internal.ValidateField(field); err != nil {
-		return whereClause{}, err
-	}
-	return whereClause{sql: field + " <= ?", args: []any{value}}, nil
-}
-
-// Contains → field LIKE '%value%'.
-func Contains(field, value string) whereClause {
-	c, _ := ContainsErr(field, value)
-	return c
-}
-
-// ContainsErr مثل Contains.
-func ContainsErr(field, value string) (whereClause, error) {
-	if err := internal.ValidateField(field); err != nil {
-		return whereClause{}, err
-	}
-	return whereClause{sql: field + " LIKE ?", args: []any{"%" + value + "%"}}, nil
-}
-
-// StartsWith → field LIKE 'value%'.
-func StartsWith(field, value string) whereClause {
-	c, _ := StartsWithErr(field, value)
-	return c
-}
-
-// StartsWithErr مثل StartsWith.
-func StartsWithErr(field, value string) (whereClause, error) {
-	if err := internal.ValidateField(field); err != nil {
-		return whereClause{}, err
-	}
-	return whereClause{sql: field + " LIKE ?", args: []any{value + "%"}}, nil
-}
-
-// EndsWith → field LIKE '%value'.
-func EndsWith(field, value string) whereClause {
-	c, _ := EndsWithErr(field, value)
-	return c
-}
-
-// EndsWithErr مثل EndsWith.
-func EndsWithErr(field, value string) (whereClause, error) {
-	if err := internal.ValidateField(field); err != nil {
-		return whereClause{}, err
-	}
-	return whereClause{sql: field + " LIKE ?", args: []any{"%" + value}}, nil
-}
-
-// In → field IN (values...).
-func In(field string, values []any) whereClause {
-	c, _ := InErr(field, values)
-	return c
-}
-
-// InErr مثل In.
-func InErr(field string, values []any) (whereClause, error) {
-	if err := internal.ValidateField(field); err != nil {
-		return whereClause{}, err
-	}
-	if len(values) == 0 {
-		return whereClause{sql: "1=0"}, nil
-	}
-	placeholders := strings.Repeat("?,", len(values))
-	placeholders = placeholders[:len(placeholders)-1]
-	return whereClause{sql: field + " IN (" + placeholders + ")", args: values}, nil
-}
-
-// IsNull → field IS NULL.
-func IsNull(field string) whereClause {
-	c, _ := IsNullErr(field)
-	return c
-}
-
-// IsNullErr مثل IsNull.
-func IsNullErr(field string) (whereClause, error) {
-	if err := internal.ValidateField(field); err != nil {
-		return whereClause{}, err
-	}
-	return whereClause{sql: field + " IS NULL"}, nil
-}
-
-// NotNull → field IS NOT NULL.
-func NotNull(field string) whereClause {
-	c, _ := NotNullErr(field)
-	return c
-}
-
-// NotNullErr مثل NotNull.
-func NotNullErr(field string) (whereClause, error) {
-	if err := internal.ValidateField(field); err != nil {
-		return whereClause{}, err
-	}
-	return whereClause{sql: field + " IS NOT NULL"}, nil
-}
-
-// Raw → SQL خام. لا يتحقق من الحقل.
-//
-// ⚠️ المسؤولية على المستخدم — لا يوجد validation.
-//
-// مثال:
-//
-//	gormx.Raw("age > ? AND status = ?", 18, "active")
-func Raw(sql string, args ...any) internal.RawClause {
-	return internal.RawClause{SQL: sql, Args: args}
-}
-
-// Not → نفي الشرط.
-//
-// يدعم: whereClause, internal.RawClause, *Q
-func Not(c any) notClause {
-	switch v := c.(type) {
-	case whereClause:
-		return notClause{sql: v.sql, args: v.args}
-	case internal.RawClause:
-		return notClause{sql: v.SQL, args: v.Args}
-	case *Q:
-		sql, args := v.toSQL()
-		return notClause{sql: sql, args: args}
-	}
-	return notClause{sql: "1=1"}
-}
-
-// ═══════════════════════════════════════════════
-// Q Constructors
-// ═══════════════════════════════════════════════
-
-// Qb ينشئ Q جديد بـ AND.
-func Qb() *Q {
-	return &Q{op: "AND"}
-}
-
-// QOr ينشئ Q جديد بـ OR.
-//
-//	q := gormx.QOr(
-//	    gormx.Eq("status", "active"),
-//	    gormx.Eq("status", "pending"),
-//	)
-func QOr(children ...any) *Q {
-	return &Q{op: "OR", children: children}
-}
-
-// QAnd ينشئ Q جديد بـ AND.
-func QAnd(children ...any) *Q {
-	return &Q{op: "AND", children: children}
-}
-
-// And يضيف شروط بـ AND.
-//
-// يعيد Q جديد (immutable).
-func (q *Q) And(children ...any) *Q {
-	nq := q.deepCopy()
-	if nq == nil {
-		nq = &Q{op: "AND"}
-	}
-	nq.op = "AND"
-	nq.children = append(nq.children, children...)
-	return nq
-}
-
-// Or يضيف شروط بـ OR.
-//
-// يعيد Q جديد (immutable).
-func (q *Q) Or(children ...any) *Q {
-	nq := q.deepCopy()
-	if nq == nil {
-		nq = &Q{op: "OR"}
-	}
-	nq.op = "OR"
-	nq.children = append(nq.children, children...)
-	return nq
-}
-
-// AndGroup يضيف مجموعة AND متداخلة.
-//
-//	q.AndGroup(
-//	    gormx.Eq("a", 1),
-//	    gormx.Eq("b", 2),
-//	)
-//	→ ... AND (a = ? AND b = ?)
-func (q *Q) AndGroup(children ...any) *Q {
-	return q.And(QAnd(children...))
-}
-
-// OrGroup يضيف مجموعة OR متداخلة.
-//
-//	q.OrGroup(
-//	    gormx.Eq("a", 1),
-//	    gormx.Eq("b", 2),
-//	)
-//	→ ... OR (a = ? OR b = ?)
-func (q *Q) OrGroup(children ...any) *Q {
-	return q.Or(QOr(children...))
-}
+// IsNegated يرجّع false.
+func (q *Q) IsNegated() bool { return false }
 
 // Len يرجّع عدد الشروط.
 func (q *Q) Len() int {
@@ -380,4 +123,337 @@ func (q *Q) Len() int {
 // IsEmpty يفحص إذا كان Q فارغًا.
 func (q *Q) IsEmpty() bool {
 	return q == nil || len(q.children) == 0
+}
+
+// toSQL داخلي.
+func (q *Q) toSQL() (string, []any) {
+	if q == nil || len(q.children) == 0 {
+		return "1=1", nil
+	}
+
+	parts := make([]string, 0, len(q.children))
+	var args []any
+
+	for _, c := range q.children {
+		if c == nil {
+			continue
+		}
+		sql, a := c.ToSQL()
+		if sql == "" {
+			continue
+		}
+		parts = append(parts, "("+sql+")")
+		args = append(args, a...)
+	}
+
+	if len(parts) == 0 {
+		return "1=1", nil
+	}
+
+	sep := " " + q.op + " "
+	return strings.Join(parts, sep), args
+}
+
+// deepCopy نسخة عميقة.
+func (q *Q) deepCopy() *Q {
+	if q == nil {
+		return nil
+	}
+	nq := &Q{op: q.op, children: make([]Clause, len(q.children))}
+	for i, c := range q.children {
+		if sub, ok := c.(*Q); ok {
+			nq.children[i] = sub.deepCopy()
+		} else {
+			nq.children[i] = c
+		}
+	}
+	return nq
+}
+
+// ═══════════════════════════════════════════════
+// Lookup Constructors — مع panic (للاستخدام السريع)
+// ═══════════════════════════════════════════════
+
+// Eq → field = value.
+//
+// Panics إذا كان field غير صالح.
+// استخدم EqErr للتحكم في الأخطاء.
+func Eq(field string, value any) WhereClause {
+	internal.MustValidateField(field)
+	return WhereClause{sql: field + " = ?", args: []any{value}}
+}
+
+// EqErr مثل Eq لكن يرجّع خطأ.
+func EqErr(field string, value any) (WhereClause, error) {
+	if err := internal.ValidateField(field); err != nil {
+		return WhereClause{}, err
+	}
+	return WhereClause{sql: field + " = ?", args: []any{value}}, nil
+}
+
+// Ne → field != value.
+func Ne(field string, value any) WhereClause {
+	internal.MustValidateField(field)
+	return WhereClause{sql: field + " != ?", args: []any{value}}
+}
+
+// NeErr مثل Ne.
+func NeErr(field string, value any) (WhereClause, error) {
+	if err := internal.ValidateField(field); err != nil {
+		return WhereClause{}, err
+	}
+	return WhereClause{sql: field + " != ?", args: []any{value}}, nil
+}
+
+// Gt → field > value.
+func Gt(field string, value any) WhereClause {
+	internal.MustValidateField(field)
+	return WhereClause{sql: field + " > ?", args: []any{value}}
+}
+
+// GtErr مثل Gt.
+func GtErr(field string, value any) (WhereClause, error) {
+	if err := internal.ValidateField(field); err != nil {
+		return WhereClause{}, err
+	}
+	return WhereClause{sql: field + " > ?", args: []any{value}}, nil
+}
+
+// Gte → field >= value.
+func Gte(field string, value any) WhereClause {
+	internal.MustValidateField(field)
+	return WhereClause{sql: field + " >= ?", args: []any{value}}
+}
+
+// GteErr مثل Gte.
+func GteErr(field string, value any) (WhereClause, error) {
+	if err := internal.ValidateField(field); err != nil {
+		return WhereClause{}, err
+	}
+	return WhereClause{sql: field + " >= ?", args: []any{value}}, nil
+}
+
+// Lt → field < value.
+func Lt(field string, value any) WhereClause {
+	internal.MustValidateField(field)
+	return WhereClause{sql: field + " < ?", args: []any{value}}
+}
+
+// LtErr مثل Lt.
+func LtErr(field string, value any) (WhereClause, error) {
+	if err := internal.ValidateField(field); err != nil {
+		return WhereClause{}, err
+	}
+	return WhereClause{sql: field + " < ?", args: []any{value}}, nil
+}
+
+// Lte → field <= value.
+func Lte(field string, value any) WhereClause {
+	internal.MustValidateField(field)
+	return WhereClause{sql: field + " <= ?", args: []any{value}}
+}
+
+// LteErr مثل Lte.
+func LteErr(field string, value any) (WhereClause, error) {
+	if err := internal.ValidateField(field); err != nil {
+		return WhereClause{}, err
+	}
+	return WhereClause{sql: field + " <= ?", args: []any{value}}, nil
+}
+
+// Contains → field LIKE '%value%'.
+func Contains(field, value string) WhereClause {
+	internal.MustValidateField(field)
+	return WhereClause{sql: field + " LIKE ?", args: []any{"%" + value + "%"}}
+}
+
+// ContainsErr مثل Contains.
+func ContainsErr(field, value string) (WhereClause, error) {
+	if err := internal.ValidateField(field); err != nil {
+		return WhereClause{}, err
+	}
+	return WhereClause{sql: field + " LIKE ?", args: []any{"%" + value + "%"}}, nil
+}
+
+// StartsWith → field LIKE 'value%'.
+func StartsWith(field, value string) WhereClause {
+	internal.MustValidateField(field)
+	return WhereClause{sql: field + " LIKE ?", args: []any{value + "%"}}
+}
+
+// StartsWithErr مثل StartsWith.
+func StartsWithErr(field, value string) (WhereClause, error) {
+	if err := internal.ValidateField(field); err != nil {
+		return WhereClause{}, err
+	}
+	return WhereClause{sql: field + " LIKE ?", args: []any{value + "%"}}, nil
+}
+
+// EndsWith → field LIKE '%value'.
+func EndsWith(field, value string) WhereClause {
+	internal.MustValidateField(field)
+	return WhereClause{sql: field + " LIKE ?", args: []any{"%" + value}}
+}
+
+// EndsWithErr مثل EndsWith.
+func EndsWithErr(field, value string) (WhereClause, error) {
+	if err := internal.ValidateField(field); err != nil {
+		return WhereClause{}, err
+	}
+	return WhereClause{sql: field + " LIKE ?", args: []any{"%" + value}}, nil
+}
+
+// In → field IN (values...).
+func In(field string, values []any) WhereClause {
+	internal.MustValidateField(field)
+	if len(values) == 0 {
+		return WhereClause{sql: "1=0"}
+	}
+	placeholders := strings.Repeat("?,", len(values))
+	placeholders = placeholders[:len(placeholders)-1]
+	return WhereClause{
+		sql:  field + " IN (" + placeholders + ")",
+		args: values,
+	}
+}
+
+// InErr مثل In.
+func InErr(field string, values []any) (WhereClause, error) {
+	if err := internal.ValidateField(field); err != nil {
+		return WhereClause{}, err
+	}
+	if len(values) == 0 {
+		return WhereClause{sql: "1=0"}, nil
+	}
+	placeholders := strings.Repeat("?,", len(values))
+	placeholders = placeholders[:len(placeholders)-1]
+	return WhereClause{
+		sql:  field + " IN (" + placeholders + ")",
+		args: values,
+	}, nil
+}
+
+// IsNull → field IS NULL.
+func IsNull(field string) WhereClause {
+	internal.MustValidateField(field)
+	return WhereClause{sql: field + " IS NULL"}
+}
+
+// IsNullErr مثل IsNull.
+func IsNullErr(field string) (WhereClause, error) {
+	if err := internal.ValidateField(field); err != nil {
+		return WhereClause{}, err
+	}
+	return WhereClause{sql: field + " IS NULL"}, nil
+}
+
+// NotNull → field IS NOT NULL.
+func NotNull(field string) WhereClause {
+	internal.MustValidateField(field)
+	return WhereClause{sql: field + " IS NOT NULL"}
+}
+
+// NotNullErr مثل NotNull.
+func NotNullErr(field string) (WhereClause, error) {
+	if err := internal.ValidateField(field); err != nil {
+		return WhereClause{}, err
+	}
+	return WhereClause{sql: field + " IS NOT NULL"}, nil
+}
+
+// ═══════════════════════════════════════════════
+// Not — نفي شرط
+// ═══════════════════════════════════════════════
+
+// Not ينفي شرطًا.
+//
+//	Not(Eq("status", "deleted"))
+//	→ NOT (status = ?)
+func Not(c Clause) NotClause {
+	return NotClause{inner: c}
+}
+
+// ═══════════════════════════════════════════════
+// Q Constructors
+// ═══════════════════════════════════════════════
+
+// Or ينشئ Q مع OR.
+//
+//	q := gormz.Or(
+//	    gormz.Eq("status", "active"),
+//	    gormz.Eq("status", "pending"),
+//	)
+func Or(clauses ...Clause) *Q {
+	return &Q{op: "OR", children: clauses}
+}
+
+// And ينشئ Q مع AND.
+func And(clauses ...Clause) *Q {
+	return &Q{op: "AND", children: clauses}
+}
+
+// Qb ينشئ Q فارغًا مع AND.
+func Qb() *Q {
+	return &Q{op: "AND"}
+}
+
+// QOr — alias للتوافق مع v0.1.0.
+//
+// Deprecated: استخدم Or.
+func QOr(children ...any) *Q {
+	return &Q{op: "OR", children: toClauses(children)}
+}
+
+// QAnd — alias للتوافق مع v0.1.0.
+//
+// Deprecated: استخدم And.
+func QAnd(children ...any) *Q {
+	return &Q{op: "AND", children: toClauses(children)}
+}
+
+// toClauses يحوّل []any إلى []Clause.
+func toClauses(items []any) []Clause {
+	out := make([]Clause, 0, len(items))
+	for _, item := range items {
+		if c, ok := item.(Clause); ok {
+			out = append(out, c)
+		}
+	}
+	return out
+}
+
+// ═══════════════════════════════════════════════
+// Methods on Q
+// ═══════════════════════════════════════════════
+
+// And يضيف شروطًا بـ AND (immutable).
+func (q *Q) And(clauses ...Clause) *Q {
+	nq := q.deepCopy()
+	if nq == nil {
+		nq = &Q{op: "AND"}
+	}
+	nq.op = "AND"
+	nq.children = append(nq.children, clauses...)
+	return nq
+}
+
+// Or يضيف شروطًا بـ OR (immutable).
+func (q *Q) Or(clauses ...Clause) *Q {
+	nq := q.deepCopy()
+	if nq == nil {
+		nq = &Q{op: "OR"}
+	}
+	nq.op = "OR"
+	nq.children = append(nq.children, clauses...)
+	return nq
+}
+
+// AndGroup يضيف مجموعة AND متداخلة.
+func (q *Q) AndGroup(clauses ...Clause) *Q {
+	return q.And(And(clauses...))
+}
+
+// OrGroup يضيف مجموعة OR متداخلة.
+func (q *Q) OrGroup(clauses ...Clause) *Q {
+	return q.Or(Or(clauses...))
 }

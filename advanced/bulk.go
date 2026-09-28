@@ -1,12 +1,13 @@
-// Package advanced provides advanced query capabilities for gormx.
+// Package advanced provides advanced query capabilities for gormz.
 package advanced
 
 import (
 	"context"
 	"fmt"
+	"strings"
 
-	"github.com/abdallah-elngar/gormx"
-	"github.com/abdallah-elngar/gormx/internal"
+	"github.com/light-tech-dev/gormz"
+	"github.com/light-tech-dev/gormz/internal"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
@@ -53,6 +54,29 @@ func normalizeBatchSize(size int) int {
 }
 
 // ═══════════════════════════════════════════════
+// Dialect Detection
+// ═══════════════════════════════════════════════
+
+// detectDialect يكتشف dialect من gorm.DB.
+//
+// يرجّع DialectUnknown إذا لم يتمكن من التحديد.
+func detectDialect(db *gorm.DB) internal.Dialect {
+	if db == nil || db.Dialector == nil {
+		return internal.DialectUnknown
+	}
+	name := db.Dialector.Name()
+	switch name {
+	case "sqlite":
+		return internal.DialectSQLite
+	case "postgres":
+		return internal.DialectPostgres
+	case "mysql":
+		return internal.DialectMySQL
+	}
+	return internal.DialectUnknown
+}
+
+// ═══════════════════════════════════════════════
 // BulkInsert
 // ═══════════════════════════════════════════════
 
@@ -66,10 +90,10 @@ func BulkInsert[T any](ctx context.Context, items []T, cfg BulkConfig) error {
 	}
 
 	batchSize := normalizeBatchSize(cfg.BatchSize)
-	db := gormx.DB().WithContext(ctx)
+	db := gormz.DB().WithContext(ctx)
 
 	if err := db.CreateInBatches(&items, batchSize).Error; err != nil {
-		return fmt.Errorf("gormx/advanced: bulk insert failed: %w", err)
+		return fmt.Errorf("gormz/advanced: bulk insert failed: %w", err)
 	}
 
 	return nil
@@ -90,7 +114,7 @@ func BulkUpsert[T any](ctx context.Context, items []T, cfg BulkConfig) error {
 		return nil
 	}
 	if len(cfg.ConflictColumns) == 0 {
-		return fmt.Errorf("gormx/advanced: BulkUpsert requires ConflictColumns")
+		return fmt.Errorf("gormz/advanced: BulkUpsert requires ConflictColumns")
 	}
 
 	// Validate ConflictColumns
@@ -106,7 +130,7 @@ func BulkUpsert[T any](ctx context.Context, items []T, cfg BulkConfig) error {
 	}
 
 	batchSize := normalizeBatchSize(cfg.BatchSize)
-	db := gormx.DB().WithContext(ctx)
+	db := gormz.DB().WithContext(ctx)
 
 	onConflict := clause.OnConflict{
 		Columns: make([]clause.Column, len(cfg.ConflictColumns)),
@@ -124,7 +148,7 @@ func BulkUpsert[T any](ctx context.Context, items []T, cfg BulkConfig) error {
 	}
 
 	if err := db.Clauses(onConflict).CreateInBatches(&items, batchSize).Error; err != nil {
-		return fmt.Errorf("gormx/advanced: bulk upsert failed: %w", err)
+		return fmt.Errorf("gormz/advanced: bulk upsert failed: %w", err)
 	}
 
 	return nil
@@ -142,6 +166,8 @@ type UpdateItem[T any] struct {
 
 // BulkUpdate يحدّث عدة سجلات بقيم مختلفة.
 //
+// يستخدم CASE WHEN لأداء أفضل من N استعلامات.
+//
 //	updates := []advanced.UpdateItem[User]{
 //	    {ID: 1, Values: map[string]any{"age": 31}},
 //	    {ID: 2, Values: map[string]any{"age": 26}},
@@ -158,8 +184,10 @@ func BulkUpdate[T any](ctx context.Context, idColumn string, items []UpdateItem[
 		return err
 	}
 
-	db := gormx.DB().WithContext(ctx)
+	db := gormz.DB().WithContext(ctx)
+	dialect := detectDialect(db)
 
+	// تجميع التحديثات حسب العمود
 	type columnData struct {
 		ids    []any
 		values []any
@@ -181,9 +209,14 @@ func BulkUpdate[T any](ctx context.Context, idColumn string, items []UpdateItem[
 		}
 	}
 
+	if len(columnMap) == 0 {
+		return nil
+	}
+
+	// بناء assignments
 	assignments := make(clause.Set, 0, len(columnMap))
 	for col, cd := range columnMap {
-		sql, args := buildCaseSQL(idColumn, col, cd.ids, cd.values)
+		sql, args := buildCaseSQL(dialect, idColumn, col, cd.ids, cd.values)
 		assignments = append(assignments, clause.Assignment{
 			Column: clause.Column{Name: col},
 			Value:  gorm.Expr(sql, args...),
@@ -197,18 +230,36 @@ func BulkUpdate[T any](ctx context.Context, idColumn string, items []UpdateItem[
 }
 
 // buildCaseSQL يبني CASE WHEN ... THEN ... ELSE column END.
-func buildCaseSQL(idColumn, column string, ids, values []any) (string, []any) {
-	var sql string
-	sql = "CASE"
+//
+// ✅ يستخدم QuoteIdentifier حسب dialect — آمن ضد SQL injection.
+//
+// مثال SQL الناتج (PostgreSQL):
+//
+//	CASE
+//	    WHEN "id" = ? THEN ?
+//	    WHEN "id" = ? THEN ?
+//	    ELSE "age"
+//	END
+func buildCaseSQL(dialect internal.Dialect, idColumn, column string, ids, values []any) (string, []any) {
+	idCol := internal.QuoteIdentifier(idColumn, dialect)
+	col := internal.QuoteIdentifier(column, dialect)
+
+	var b strings.Builder
+	b.WriteString("CASE")
 	args := make([]any, 0, len(ids)*2)
 
 	for i := range ids {
-		sql += " WHEN " + idColumn + " = ? THEN ?"
+		b.WriteString(" WHEN ")
+		b.WriteString(idCol)
+		b.WriteString(" = ? THEN ?")
 		args = append(args, ids[i], values[i])
 	}
 
-	sql += " ELSE " + column + " END"
-	return sql, args
+	b.WriteString(" ELSE ")
+	b.WriteString(col)
+	b.WriteString(" END")
+
+	return b.String(), args
 }
 
 // ═══════════════════════════════════════════════
@@ -218,13 +269,15 @@ func buildCaseSQL(idColumn, column string, ids, values []any) (string, []any) {
 // BulkDeleteByIDs يحذف سجلات كثيرة بالـ IDs.
 //
 //	deleted, err := advanced.BulkDeleteByIDs[User](ctx, ids, 1000)
+//
+// يستخدم batches لتجنّب حدود الـ SQL statement.
 func BulkDeleteByIDs[T any](ctx context.Context, ids []any, batchSize int) (int64, error) {
 	if len(ids) == 0 {
 		return 0, nil
 	}
 	batchSize = normalizeBatchSize(batchSize)
 
-	db := gormx.DB().WithContext(ctx)
+	db := gormz.DB().WithContext(ctx)
 	var zero T
 	var total int64
 
@@ -237,7 +290,10 @@ func BulkDeleteByIDs[T any](ctx context.Context, ids []any, batchSize int) (int6
 		batch := ids[i:end]
 		res := db.Delete(&zero, batch)
 		if res.Error != nil {
-			return total, res.Error
+			return total, fmt.Errorf(
+				"gormz/advanced: bulk delete batch at offset %d failed: %w",
+				i, res.Error,
+			)
 		}
 		total += res.RowsAffected
 	}
@@ -248,20 +304,26 @@ func BulkDeleteByIDs[T any](ctx context.Context, ids []any, batchSize int) (int6
 // BulkDeleteWhere يحذف حسب شرط.
 //
 // ⚠️ يتطلب condition — لحماية من الحذف الكامل.
+//
+//	deleted, err := advanced.BulkDeleteWhere[User](ctx, "age < ?", 18)
 func BulkDeleteWhere[T any](ctx context.Context, where string, args ...any) (int64, error) {
 	if where == "" {
-		return 0, fmt.Errorf("gormx/advanced: BulkDeleteWhere requires a WHERE clause")
+		return 0, fmt.Errorf("gormz/advanced: BulkDeleteWhere requires a WHERE clause")
 	}
 
-	db := gormx.DB().WithContext(ctx)
+	db := gormz.DB().WithContext(ctx)
 	var zero T
 	res := db.Where(where, args...).Delete(&zero)
 	return res.RowsAffected, res.Error
 }
 
+// ═══════════════════════════════════════════════
+// BulkCount
+// ═══════════════════════════════════════════════
+
 // BulkCount يحسب عدد السجلات حسب شرط.
 func BulkCount[T any](ctx context.Context, where string, args ...any) (int64, error) {
-	db := gormx.DB().WithContext(ctx)
+	db := gormz.DB().WithContext(ctx)
 	var zero T
 	var count int64
 

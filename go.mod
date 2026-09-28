@@ -1,4 +1,4 @@
-module github.com/abdallah-elngar/gormx
+module github.com/light-tech-dev/gormz
 
 go 1.22
 

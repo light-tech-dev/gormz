@@ -1,11 +1,11 @@
 # ═══════════════════════════════════════════════════════════════════
-#  Makefile for gormx
-#  Django-inspired, type-safe ORM for Go
+#  Makefile for gormz
+#  Type-safe, immutable ORM for Go
 # ═══════════════════════════════════════════════════════════════════
 
 # ─── متغيرات ────────────────────────────────────────────────────────
-BINARY_NAME    := gormx
-MODULE         := github.com/abdallah-elngar/gormx
+BINARY_NAME    := gormz
+MODULE         := github.com/light-tech-dev/gormz
 GO             := go
 GOFLAGS        :=
 GOTEST         := $(GO) test
@@ -51,7 +51,7 @@ BUILD_DIR      := build
 help: ## عرض المساعدة
 	@echo ""
 	@echo "$(BOLD)$(CYAN)╔══════════════════════════════════════════════════════════════╗$(NC)"
-	@echo "$(BOLD)$(CYAN)║                      gormx Makefile                          ║$(NC)"
+	@echo "$(BOLD)$(CYAN)║                      gormz Makefile                          ║$(NC)"
 	@echo "$(BOLD)$(CYAN)╚══════════════════════════════════════════════════════════════╝$(NC)"
 	@echo ""
 	@echo "$(BOLD)الأوامر المتاحة:$(NC)"

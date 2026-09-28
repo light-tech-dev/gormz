@@ -1,6 +1,6 @@
 # Security Policy
 
-> نحن نأخذ أمان `gormx` على محمل الجد. شكراً لمساعدتنا في الحفاظ عليه آمناً.
+> نحن نأخذ أمان `gormz` على محمل الجد. شكراً لمساعدتنا في الحفاظ عليه آمناً.
 
 ---
 
@@ -47,7 +47,7 @@
 
 أرسل بريداً إلى: **security@sanad.dev**
 
-أو استخدم [GitHub Private Vulnerability Reporting](https://github.com/abdallah-elngar/gormx/security/advisories/new).
+أو استخدم [GitHub Private Vulnerability Reporting](https://github.com/light-tech-dev/gormz/security/advisories/new).
 
 ### معلومات مطلوبة في التقرير
 
@@ -72,7 +72,7 @@
 - [ ] Low (0.1-3.9)
 
 ## 🎯 المكوّن المتأثر
-- [ ] gormx core
+- [ ] gormz core
 - [ ] advanced package
 - [ ] internal package
 - [ ] Specific: ___

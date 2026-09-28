@@ -1,7 +1,7 @@
 package advanced
 
 import (
-	"github.com/abdallah-elngar/gormx"
+	"github.com/light-tech-dev/gormz"
 	"gorm.io/gorm"
 )
 
@@ -48,14 +48,14 @@ func JoinSQL(jt JoinType, table, on string) string {
 
 // JoinQuery يمثل استعلامًا مع joins.
 type JoinQuery[T any] struct {
-	q     *gormx.QuerySet[T]
+	q     *gormz.QuerySet[T]
 	joins []Join
 }
 
 // WithJoins ينشئ JoinQuery.
 //
 // ⚠️ deprecated — استخدم QuerySet methods مباشرة.
-func WithJoins[T any](q *gormx.QuerySet[T]) *JoinQuery[T] {
+func WithJoins[T any](q *gormz.QuerySet[T]) *JoinQuery[T] {
 	return &JoinQuery[T]{q: q}
 }
 
@@ -133,7 +133,7 @@ func (jq *JoinQuery[T]) All() ([]T, error) {
 // ScanInto يقرأ في struct مخصص.
 func (jq *JoinQuery[T]) ScanInto(dest any) error {
 	if dest == nil {
-		return gormx.NewValidationError("dest", "nil destination")
+		return gormz.NewValidationError("dest", "nil destination")
 	}
 	return jq.build().Scan(dest).Error
 }

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/abdallah-elngar/gormx"
+	"github.com/light-tech-dev/gormz"
 )
 
 // ═══════════════════════════════════════════════
@@ -45,7 +45,7 @@ type BatchResult struct {
 //	users := []User{...}
 //	result := advanced.ProcessBatch(ctx, users, advanced.DefaultBatchConfig(),
 //	    func(batch []User) error {
-//	        return gormx.New[User]().CreateMany(batch)
+//	        return gormz.New[User]().CreateMany(batch)
 //	    })
 func ProcessBatch[T any](ctx context.Context, items []T, cfg BatchConfig, fn func(batch []T) error) *BatchResult {
 	if cfg.BatchSize <= 0 {
@@ -138,7 +138,7 @@ func Stream[T any](ctx context.Context, batchSize int, fn func(batch []T) error)
 		default:
 		}
 
-		items, err := gormx.New[T]().
+		items, err := gormz.New[T]().
 			Limit(batchSize).
 			Offset(offset).
 			All()
@@ -151,7 +151,7 @@ func Stream[T any](ctx context.Context, batchSize int, fn func(batch []T) error)
 		}
 
 		if err := fn(items); err != nil {
-			return fmt.Errorf("gormx/advanced: stream batch at offset %d failed: %w", offset, err)
+			return fmt.Errorf("gormz/advanced: stream batch at offset %d failed: %w", offset, err)
 		}
 
 		if len(items) < batchSize {

@@ -92,9 +92,9 @@ func TestingConfig() Config {
 
 ```go
 db, _ := gorm.Open(sqlite.Open("app.db"), &gorm.Config{})
-gormx.SetDB(db)
+gormz.SetDB(db)
 
-err := gormx.ConfigureDB(gormx.DefaultConfig())
+err := gormz.ConfigureDB(gormz.DefaultConfig())
 if err != nil {
     log.Fatal(err)
 }
@@ -103,9 +103,9 @@ if err != nil {
 ### مثال 2: Per-Instance
 
 ```go
-app := gormx.NewInstance(db)
+app := gormz.NewInstance(db)
 
-err := app.Configure(gormx.Config{
+err := app.Configure(gormz.Config{
     MaxOpenConns:    50,
     MaxIdleConns:    10,
     ConnMaxLifetime: time.Hour,
@@ -115,26 +115,26 @@ err := app.Configure(gormx.Config{
 ### مثال 3: Development Setup
 
 ```go
-cfg := gormx.DevelopmentConfig()
-cfg.LogLevel = gormx.LogInfo
+cfg := gormz.DevelopmentConfig()
+cfg.LogLevel = gormz.LogInfo
 
-err := gormx.ConfigureDB(cfg)
+err := gormz.ConfigureDB(cfg)
 ```
 
 ### مثال 4: Slow Query Detection
 
 ```go
-cfg := gormx.DefaultConfig()
+cfg := gormz.DefaultConfig()
 cfg.SlowQuery = 100 * time.Millisecond
 
 // ستُسجّل الاستعلامات > 100ms
-gormx.ConfigureDB(cfg)
+gormz.ConfigureDB(cfg)
 ```
 
 ### مثال 5: Prepare Statements
 
 ```go
-cfg := gormx.DefaultConfig()
+cfg := gormz.DefaultConfig()
 cfg.PrepareStmt = true
 
 // أسرع للاستعلامات المتكررة، لكن ذاكرة أكثر
@@ -197,7 +197,7 @@ MaxOpenConns = (2 × CPU cores) + effective_spindle_count
 ### PostgreSQL
 
 ```go
-cfg := gormx.DefaultConfig()
+cfg := gormz.DefaultConfig()
 cfg.MaxOpenConns = 50
 cfg.MaxIdleConns = 10
 cfg.ConnMaxLifetime = time.Hour
@@ -207,7 +207,7 @@ cfg.PrepareStmt = true
 ### MySQL
 
 ```go
-cfg := gormx.DefaultConfig()
+cfg := gormz.DefaultConfig()
 cfg.MaxOpenConns = 30
 cfg.MaxIdleConns = 5
 cfg.ConnMaxLifetime = 30 * time.Minute  // < wait_timeout
@@ -216,7 +216,7 @@ cfg.ConnMaxLifetime = 30 * time.Minute  // < wait_timeout
 ### SQLite
 
 ```go
-cfg := gormx.DefaultConfig()
+cfg := gormz.DefaultConfig()
 cfg.MaxOpenConns = 1  // SQLite: writer واحد
 cfg.MaxIdleConns = 1
 ```

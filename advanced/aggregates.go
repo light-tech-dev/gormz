@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/abdallah-elngar/gormx"
-	"github.com/abdallah-elngar/gormx/internal"
+	"github.com/light-tech-dev/gormz"
+	"github.com/light-tech-dev/gormz/internal"
 	"gorm.io/gorm"
 )
 
@@ -44,15 +44,15 @@ func GroupBy[T any](fields ...string) *AggregateQuery[T] {
 		}
 	}
 	return &AggregateQuery[T]{
-		db:      gormx.DB(),
+		db:      gormz.DB(),
 		groupBy: fields,
 	}
 }
 
 // GroupByWithInstance ينشئ استعلامًا على Instance معين.
-func GroupByWithInstance[T any](i *gormx.Instance, fields ...string) *AggregateQuery[T] {
+func GroupByWithInstance[T any](i *gormz.Instance, fields ...string) *AggregateQuery[T] {
 	if i == nil {
-		panic(gormx.ErrNilDB)
+		panic(gormz.ErrNilDB)
 	}
 	for _, f := range fields {
 		if err := internal.ValidateField(f); err != nil {
@@ -301,7 +301,7 @@ func (aq *AggregateQuery[T]) All() ([]map[string]any, error) {
 // ScanInto يقرأ في struct مخصص.
 func (aq *AggregateQuery[T]) ScanInto(dest any) error {
 	if dest == nil {
-		return fmt.Errorf("gormx/advanced: nil destination")
+		return fmt.Errorf("gormz/advanced: nil destination")
 	}
 	return aq.build().Find(dest).Error
 }
@@ -313,7 +313,7 @@ func (aq *AggregateQuery[T]) CountGroups() (int64, error) {
 	if len(aq.groupBy) > 0 {
 		var count int64
 		subq := aq.build().Select(strings.Join(aq.groupBy, ", "))
-		err := gormx.DB().Model(&zero).
+		err := gormz.DB().Model(&zero).
 			Table("(?) as sub", subq).
 			Count(&count).Error
 		return count, err
@@ -397,7 +397,7 @@ func Distinct[T any](field string) ([]any, error) {
 	var zero T
 	var results []any
 
-	err := gormx.DB().Model(&zero).
+	err := gormz.DB().Model(&zero).
 		Distinct(field).
 		Pluck(field, &results).Error
 
@@ -413,7 +413,7 @@ func CountDistinctValues[T any](field string) (int64, error) {
 	var zero T
 	var count int64
 
-	err := gormx.DB().Model(&zero).
+	err := gormz.DB().Model(&zero).
 		Select("COUNT(DISTINCT " + field + ")").
 		Scan(&count).Error
 
@@ -432,7 +432,7 @@ func GroupConcat[T any](field, separator string) (string, error) {
 	var result *string
 
 	expr := fmt.Sprintf("GROUP_CONCAT(%s, ?)", field)
-	err := gormx.DB().Model(&zero).
+	err := gormz.DB().Model(&zero).
 		Select(expr, separator).
 		Scan(&result).Error
 

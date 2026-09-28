@@ -44,21 +44,21 @@ Not(condition)
 ### مثال 1: OR بسيط
 
 ```go
-q := gormx.QOr(
-    gormx.Eq("status", "active"),
-    gormx.Eq("status", "pending"),
+q := gormz.QOr(
+    gormz.Eq("status", "active"),
+    gormz.Eq("status", "pending"),
 )
 
-users, _ := gormx.New[User]().Q(q).All()
+users, _ := gormz.New[User]().Q(q).All()
 // SELECT * FROM users WHERE status = 'active' OR status = 'pending'
 ```
 
 ### مثال 2: AND
 
 ```go
-q := gormx.QAnd(
-    gormx.Eq("active", true),
-    gormx.Gt("age", 18),
+q := gormz.QAnd(
+    gormz.Eq("active", true),
+    gormz.Gt("age", 18),
 )
 
 // active = true AND age > 18
@@ -68,23 +68,23 @@ q := gormx.QAnd(
 
 ```go
 // (status = 'active' OR status = 'pending') AND age > 18
-q := gormx.Qb().And(
-    gormx.QOr(
-        gormx.Eq("status", "active"),
-        gormx.Eq("status", "pending"),
+q := gormz.Qb().And(
+    gormz.QOr(
+        gormz.Eq("status", "active"),
+        gormz.Eq("status", "pending"),
     ),
-    gormx.Gt("age", 18),
+    gormz.Gt("age", 18),
 )
 
-users, _ := gormx.New[User]().Q(q).All()
+users, _ := gormz.New[User]().Q(q).All()
 ```
 
 ### مثال 4: NOT
 
 ```go
-q := gormx.QAnd(
-    gormx.Not(gormx.Eq("status", "deleted")),
-    gormx.Eq("active", true),
+q := gormz.QAnd(
+    gormz.Not(gormz.Eq("status", "deleted")),
+    gormz.Eq("active", true),
 )
 
 // NOT (status = 'deleted') AND active = true
@@ -94,14 +94,14 @@ q := gormx.QAnd(
 ### مثال 5: NOT مع Q
 
 ```go
-inner := gormx.QOr(
-    gormx.Eq("a", 1),
-    gormx.Eq("b", 2),
+inner := gormz.QOr(
+    gormz.Eq("a", 1),
+    gormz.Eq("b", 2),
 )
 
-q := gormx.QAnd(
-    gormx.Not(inner),
-    gormx.Eq("c", 3),
+q := gormz.QAnd(
+    gormz.Not(inner),
+    gormz.Eq("c", 3),
 )
 
 // NOT (a = 1 OR b = 2) AND c = 3
@@ -110,15 +110,15 @@ q := gormx.QAnd(
 ### مثال 6: تداخل عميق
 
 ```go
-q := gormx.QAnd(
-    gormx.QOr(
-        gormx.Eq("type", "A"),
-        gormx.QAnd(
-            gormx.Eq("type", "B"),
-            gormx.Gt("value", 100),
+q := gormz.QAnd(
+    gormz.QOr(
+        gormz.Eq("type", "A"),
+        gormz.QAnd(
+            gormz.Eq("type", "B"),
+            gormz.Gt("value", 100),
         ),
     ),
-    gormx.Eq("active", true),
+    gormz.Eq("active", true),
 )
 
 // (type = 'A' OR (type = 'B' AND value > 100)) AND active = true
@@ -127,12 +127,12 @@ q := gormx.QAnd(
 ### مثال 7: دمج مع Filter
 
 ```go
-q := gormx.QOr(
-    gormx.Eq("role", "admin"),
-    gormx.Eq("role", "moderator"),
+q := gormz.QOr(
+    gormz.Eq("role", "admin"),
+    gormz.Eq("role", "moderator"),
 )
 
-users, _ := gormx.New[User]().
+users, _ := gormz.New[User]().
     Filter("active", true).       // AND
     Q(q).                          // AND (role = 'admin' OR role = 'moderator')
     Filter("age__gte", 18).
@@ -147,26 +147,26 @@ users, _ := gormx.New[User]().
 ### `And(children...)`
 
 ```go
-q := gormx.Qb().
-    And(gormx.Eq("a", 1)).
-    And(gormx.Eq("b", 2))
+q := gormz.Qb().
+    And(gormz.Eq("a", 1)).
+    And(gormz.Eq("b", 2))
 // a = 1 AND b = 2
 ```
 
 ### `Or(children...)`
 
 ```go
-q := gormx.Qb().
-    Or(gormx.Eq("a", 1)).
-    Or(gormx.Eq("b", 2))
+q := gormz.Qb().
+    Or(gormz.Eq("a", 1)).
+    Or(gormz.Eq("b", 2))
 // a = 1 OR b = 2
 ```
 
 ⚠️ **مهم**: كلاهما **immutable**:
 
 ```go
-base := gormx.Qb().And(gormx.Eq("a", 1))
-extended := base.And(gormx.Eq("b", 2))
+base := gormz.Qb().And(gormz.Eq("a", 1))
+extended := base.And(gormz.Eq("b", 2))
 
 // base لم يتغير
 ```
@@ -174,11 +174,11 @@ extended := base.And(gormx.Eq("b", 2))
 ### `AndGroup(children...)`
 
 ```go
-q := gormx.Qb().
-    And(gormx.Eq("a", 1)).
+q := gormz.Qb().
+    And(gormz.Eq("a", 1)).
     AndGroup(
-        gormx.Eq("b", 2),
-        gormx.Eq("c", 3),
+        gormz.Eq("b", 2),
+        gormz.Eq("c", 3),
     )
 // a = 1 AND (b = 2 AND c = 3)
 ```
@@ -186,11 +186,11 @@ q := gormx.Qb().
 ### `OrGroup(children...)`
 
 ```go
-q := gormx.Qb().
-    And(gormx.Eq("a", 1)).
+q := gormz.Qb().
+    And(gormz.Eq("a", 1)).
     OrGroup(
-        gormx.Eq("b", 2),
-        gormx.Eq("c", 3),
+        gormz.Eq("b", 2),
+        gormz.Eq("c", 3),
     )
 // a = 1 OR (b = 2 OR c = 3)
 ```
@@ -210,14 +210,14 @@ fmt.Println(sql)
 
 ```go
 func SearchUsers(filters SearchFilters) ([]User, error) {
-    q := gormx.New[User]().Filter("active", true)
+    q := gormz.New[User]().Filter("active", true)
 
     // بحث نصي (OR على عدة أعمدة)
     if filters.Query != "" {
-        searchQ := gormx.QOr(
-            gormx.Contains("name", filters.Query),
-            gormx.Contains("email", filters.Query),
-            gormx.Contains("phone", filters.Query),
+        searchQ := gormz.QOr(
+            gormz.Contains("name", filters.Query),
+            gormz.Contains("email", filters.Query),
+            gormz.Contains("phone", filters.Query),
         )
         q = q.Q(searchQ)
     }
@@ -237,9 +237,9 @@ func SearchUsers(filters SearchFilters) ([]User, error) {
 
     // حالة خاصة: admin أو verified
     if filters.SpecialOnly {
-        specialQ := gormx.QOr(
-            gormx.Eq("role", "admin"),
-            gormx.Eq("verified", true),
+        specialQ := gormz.QOr(
+            gormz.Eq("role", "admin"),
+            gormz.Eq("verified", true),
         )
         q = q.Q(specialQ)
     }
@@ -258,14 +258,14 @@ func SearchUsers(filters SearchFilters) ([]User, error) {
 
 ```go
 // ❌ بطيء
-q := gormx.QOr(
-    gormx.Eq("status", "active"),
-    gormx.Eq("status", "pending"),
-    gormx.Eq("status", "verified"),
+q := gormz.QOr(
+    gormz.Eq("status", "active"),
+    gormz.Eq("status", "pending"),
+    gormz.Eq("status", "verified"),
 )
 
 // ✅ أسرع
-q := gormx.In("status", []any{"active", "pending", "verified"})
+q := gormz.In("status", []any{"active", "pending", "verified"})
 ```
 
 ---

@@ -1,10 +1,10 @@
-package gormx_test
+package gormz_test
 
 import (
 	"context"
 	"testing"
 
-	"github.com/abdallah-elngar/gormx"
+	"github.com/light-tech-dev/gormz"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/sqlite"
@@ -15,12 +15,12 @@ func TestContext_WithDB(t *testing.T) {
 	db, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	require.NoError(t, db.AutoMigrate(&User{}))
 
-	app := gormx.NewInstance(db)
-	ctx := gormx.WithDB(context.Background(), app)
+	app := gormz.NewInstance(db)
+	ctx := gormz.WithDB(context.Background(), app)
 
-	require.NoError(t, gormx.FromContext[User](ctx).Create(&User{Name: "Ali"}))
+	require.NoError(t, gormz.FromContext[User](ctx).Create(&User{Name: "Ali"}))
 
-	users, err := gormx.FromContext[User](ctx).All()
+	users, err := gormz.FromContext[User](ctx).All()
 	require.NoError(t, err)
 	assert.Len(t, users, 1)
 }
@@ -28,40 +28,40 @@ func TestContext_WithDB(t *testing.T) {
 func TestContext_FallbackToGlobal(t *testing.T) {
 	db, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	require.NoError(t, db.AutoMigrate(&User{}))
-	gormx.SetDB(db)
+	gormz.SetDB(db)
 
 	ctx := context.Background()
 
-	require.NoError(t, gormx.FromContext[User](ctx).Create(&User{Name: "Ali"}))
+	require.NoError(t, gormz.FromContext[User](ctx).Create(&User{Name: "Ali"}))
 
-	count, _ := gormx.FromContext[User](ctx).Count()
+	count, _ := gormz.FromContext[User](ctx).Count()
 	assert.Equal(t, int64(1), count)
 }
 
 func TestContext_DBFromContext(t *testing.T) {
 	db, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	app := gormx.NewInstance(db)
+	app := gormz.NewInstance(db)
 
-	_, ok := gormx.DBFromContext(context.Background())
+	_, ok := gormz.DBFromContext(context.Background())
 	assert.False(t, ok)
 
-	ctx := gormx.WithDB(context.Background(), app)
-	instance, ok := gormx.DBFromContext(ctx)
+	ctx := gormz.WithDB(context.Background(), app)
+	instance, ok := gormz.DBFromContext(ctx)
 	assert.True(t, ok)
 	assert.Same(t, app, instance)
 }
 
 func TestContext_WithGormDB(t *testing.T) {
 	db, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-	ctx := gormx.WithGormDB(context.Background(), db)
+	ctx := gormz.WithGormDB(context.Background(), db)
 
-	instance, ok := gormx.DBFromContext(ctx)
+	instance, ok := gormz.DBFromContext(ctx)
 	assert.True(t, ok)
 	assert.NotNil(t, instance)
 }
 
 func TestContext_WithGormDBNilPanics(t *testing.T) {
 	assert.Panics(t, func() {
-		gormx.WithGormDB(context.Background(), nil)
+		gormz.WithGormDB(context.Background(), nil)
 	})
 }

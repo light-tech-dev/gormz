@@ -1,17 +1,17 @@
-# gormx
+# gormz
 
-> Django-inspired, type-safe ORM for Go — built on top of GORM.
+> Type-safe, immutable ORM for Go — built on top of GORM.
 
 [![Go Version](https://img.shields.io/badge/Go-1.22+-00ADD8?logo=go)](https://go.dev)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Go Reference](https://pkg.go.dev/badge/github.com/abdallah-elngar/gormx.svg)](https://pkg.go.dev/github.com/abdallah-elngar/gormx)
+[![Go Reference](https://pkg.go.dev/badge/github.com/light-tech-dev/gormz.svg)](https://pkg.go.dev/github.com/light-tech-dev/gormz)
 [![Test Coverage](https://img.shields.io/badge/coverage-90%25-brightgreen)]()
 
 ---
 
-## 🎯 What is gormx?
+## 🎯 What is gormz?
 
-**gormx** is a Django-inspired, type-safe ORM layer on top of [GORM](https://gorm.io). It keeps GORM's power while offering a cleaner, more intuitive API.
+**gormz** is a type-safe, immutable ORM layer on top of [GORM](https://gorm.io). It keeps GORM's power while offering a cleaner, more intuitive API.
 
 ```go
 // ❌ GORM — verbose
@@ -23,8 +23,8 @@ db.Model(&User{}).
     Limit(10).
     Find(&users)
 
-// ✅ gormx — clean, type-safe
-users, _ := gormx.New[User]().
+// ✅ gormz — clean, type-safe
+users, _ := gormz.New[User]().
     Filter("age__gt", 18).
     Filter("active", true).
     OrderBy("-created_at").

@@ -88,4 +88,4 @@ jobs:
 
             ### Installation
             ```bash
-            go get github.com/abdallah-elngar/gormx@${{ steps.version.outputs.tag }}
+            go get github.com/light-tech-dev/gormz@${{ steps.version.outputs.tag }}

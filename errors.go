@@ -1,9 +1,10 @@
-package gormx
+package gormz
 
 import (
 	"errors"
 	"fmt"
 
+	"github.com/light-tech-dev/gormz/internal"
 	"gorm.io/gorm"
 )
 
@@ -16,25 +17,25 @@ var (
 	ErrNotFound = gorm.ErrRecordNotFound
 
 	// ErrNotInitialized يُرجع لو SetDB لم يُنادى.
-	ErrNotInitialized = errors.New("gormx: DB not initialized")
+	ErrNotInitialized = errors.New("gormz: DB not initialized")
 
 	// ErrNilDB يُرجع لو تم تمرير nil.
-	ErrNilDB = errors.New("gormx: nil DB")
+	ErrNilDB = errors.New("gormz: nil DB")
 
 	// ErrInvalidField يُرجع عند حقل غير صحيح.
-	ErrInvalidField = errors.New("gormx: invalid field")
+	ErrInvalidField = errors.New("gormz: invalid field")
 
 	// ErrInvalidQuery يُرجع عند استعلام غير صحيح.
-	ErrInvalidQuery = errors.New("gormx: invalid query")
+	ErrInvalidQuery = errors.New("gormz: invalid query")
 
 	// ErrDangerousOperation يُرجع عند عملية خطرة بدون conditions.
-	ErrDangerousOperation = errors.New("gormx: dangerous operation without conditions")
+	ErrDangerousOperation = errors.New("gormz: dangerous operation without conditions")
 
 	// ErrAlreadyRegistered يُرجع عند تسجيل موديل بنفس الاسم مرتين.
-	ErrAlreadyRegistered = errors.New("gormx: model already registered")
+	ErrAlreadyRegistered = errors.New("gormz: model already registered")
 
 	// ErrNotFoundInRegistry يُرجع عند البحث عن موديل غير مسجّل.
-	ErrNotFoundInRegistry = errors.New("gormx: model not found in registry")
+	ErrNotFoundInRegistry = errors.New("gormz: model not found in registry")
 )
 
 // ═══════════════════════════════════════════════
@@ -49,9 +50,9 @@ type NotFoundError struct {
 
 func (e *NotFoundError) Error() string {
 	if e.ID == nil {
-		return fmt.Sprintf("gormx: %s not found", e.Model)
+		return fmt.Sprintf("gormz: %s not found", e.Model)
 	}
-	return fmt.Sprintf("gormx: %s with id %v not found", e.Model, e.ID)
+	return fmt.Sprintf("gormz: %s with id %v not found", e.Model, e.ID)
 }
 
 // Unwrap يسمح باستخدام errors.Is(err, ErrNotFound).
@@ -71,7 +72,7 @@ type ValidationError struct {
 }
 
 func (e *ValidationError) Error() string {
-	return fmt.Sprintf("gormx: invalid field %q: %s", e.Field, e.Reason)
+	return fmt.Sprintf("gormz: invalid field %q: %s", e.Field, e.Reason)
 }
 
 func (e *ValidationError) Unwrap() error {
@@ -91,9 +92,9 @@ type DangerousOperationError struct {
 
 func (e *DangerousOperationError) Error() string {
 	if e.Reason == "" {
-		return fmt.Sprintf("gormx: dangerous operation %q", e.Operation)
+		return fmt.Sprintf("gormz: dangerous operation %q", e.Operation)
 	}
-	return fmt.Sprintf("gormx: dangerous operation %q: %s", e.Operation, e.Reason)
+	return fmt.Sprintf("gormz: dangerous operation %q: %s", e.Operation, e.Reason)
 }
 
 func (e *DangerousOperationError) Unwrap() error {
@@ -163,4 +164,74 @@ func AsDangerous(err error) (*DangerousOperationError, bool) {
 		return de, true
 	}
 	return nil, false
+}
+
+// ═══════════════════════════════════════════════
+// Field Validation — Wrappers للاستخدام الخارجي
+// ═══════════════════════════════════════════════
+
+// ValidateField يتحقق من صحة اسم حقل.
+//
+// يقبل:
+//   - snake_case: user_id
+//   - dotted: users.id
+//   - prefixed: t1.name
+//
+// يرفض:
+//   - أسماء فارغة
+//   - أحرف غير صالحة (;، '، ")
+//   - كلمات SQL محجوزة (select, drop, ...)
+//
+// مثال:
+//
+//	if err := gormz.ValidateField(field); err != nil {
+//	    return err
+//	}
+func ValidateField(field string) error {
+	return internal.ValidateField(field)
+}
+
+// ValidateFields يتحقق من عدة حقول.
+func ValidateFields(fields ...string) error {
+	return internal.ValidateFields(fields...)
+}
+
+// ValidateLookup يتحقق من صحة اسم lookup.
+//
+// مثال:
+//
+//	gormz.ValidateLookup("gt")     // nil
+//	gormz.ValidateLookup("bad")    // error
+func ValidateLookup(lookup string) error {
+	return internal.ValidateLookup(lookup)
+}
+
+// ValidateTableName يتحقق من صحة اسم جدول.
+func ValidateTableName(table string) error {
+	return internal.ValidateTableName(table)
+}
+
+// ValidateOperator يتحقق من صحة operator.
+func ValidateOperator(op string) error {
+	return internal.ValidateOperator(op)
+}
+
+// ═══════════════════════════════════════════════
+// Must Wrappers — للاستخدام الداخلي/السريع
+// ═══════════════════════════════════════════════
+
+// MustValidateField يتحقق وpanic عند الخطأ.
+//
+// ⚠️ استخدم بحذر — للاستخدام الداخلي.
+func MustValidateField(field string) {
+	if err := ValidateField(field); err != nil {
+		panic(err)
+	}
+}
+
+// MustValidateFields يتحقق وpanic عند الخطأ.
+func MustValidateFields(fields ...string) {
+	if err := ValidateFields(fields...); err != nil {
+		panic(err)
+	}
 }

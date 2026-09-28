@@ -14,8 +14,8 @@ import (
     "fmt"
     "log"
 
-    "github.com/abdallah-elngar/gormx"
-    "github.com/abdallah-elngar/gormx/advanced"
+    "github.com/light-tech-dev/gormz"
+    "github.com/light-tech-dev/gormz/advanced"
     "gorm.io/driver/sqlite"
     "gorm.io/gorm"
 )
@@ -29,8 +29,8 @@ type User struct {
 
 func main() {
     db, _ := gorm.Open(sqlite.Open("bulk.db"), &gorm.Config{})
-    gormx.SetDB(db)
-    gormx.MustMigrate[User]()
+    gormz.SetDB(db)
+    gormz.MustMigrate[User]()
 
     ctx := context.Background()
 
@@ -76,7 +76,7 @@ func bulkInsertExample(ctx context.Context) {
 
     fmt.Printf("Inserted %d users in %v\n", len(users), elapsed)
 
-    count, _ := gormx.New[User]().Count()
+    count, _ := gormz.New[User]().Count()
     fmt.Printf("Total in DB: %d\n", count)
 }
 ```
@@ -106,7 +106,7 @@ func bulkUpsertExample(ctx context.Context) {
     fmt.Println("Upserted 2 users")
 
     // فحص
-    user, _ := gormx.New[User]().Find("email", "user0@test.com")
+    user, _ := gormz.New[User]().Find("email", "user0@test.com")
     fmt.Printf("user0 age: %d (was 99)\n", user.Age)
 }
 ```
@@ -135,7 +135,7 @@ func bulkDeleteExample(ctx context.Context) {
 
     fmt.Printf("Deleted %d users in %v\n", deleted, elapsed)
 
-    count, _ := gormx.New[User]().Count()
+    count, _ := gormz.New[User]().Count()
     fmt.Printf("Remaining: %d\n", count)
 }
 ```

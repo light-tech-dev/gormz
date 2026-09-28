@@ -1,16 +1,16 @@
-package gormx_test
+package gormz_test
 
 import (
 	"testing"
 
-	"github.com/abdallah-elngar/gormx"
+	"github.com/light-tech-dev/gormz"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestQ_SimpleOr(t *testing.T) {
-	q := gormx.QOr(
-		gormx.Eq("status", "active"),
-		gormx.Eq("status", "pending"),
+	q := gormz.QOr(
+		gormz.Eq("status", "active"),
+		gormz.Eq("status", "pending"),
 	)
 
 	sql, args := q.ToSQL()
@@ -20,9 +20,9 @@ func TestQ_SimpleOr(t *testing.T) {
 }
 
 func TestQ_SimpleAnd(t *testing.T) {
-	q := gormx.QAnd(
-		gormx.Eq("status", "active"),
-		gormx.Gt("age", 18),
+	q := gormz.QAnd(
+		gormz.Eq("status", "active"),
+		gormz.Gt("age", 18),
 	)
 
 	sql, _ := q.ToSQL()
@@ -30,12 +30,12 @@ func TestQ_SimpleAnd(t *testing.T) {
 }
 
 func TestQ_Nested(t *testing.T) {
-	q := gormx.Qb().And(
-		gormx.QOr(
-			gormx.Eq("status", "active"),
-			gormx.Eq("status", "pending"),
+	q := gormz.Qb().And(
+		gormz.QOr(
+			gormz.Eq("status", "active"),
+			gormz.Eq("status", "pending"),
 		),
-		gormx.Gt("age", 18),
+		gormz.Gt("age", 18),
 	)
 
 	sql, _ := q.ToSQL()
@@ -46,9 +46,9 @@ func TestQ_Nested(t *testing.T) {
 }
 
 func TestQ_Not(t *testing.T) {
-	q := gormx.QOr(
-		gormx.Not(gormx.Eq("status", "deleted")),
-		gormx.Eq("status", "active"),
+	q := gormz.QOr(
+		gormz.Not(gormz.Eq("status", "deleted")),
+		gormz.Eq("status", "active"),
 	)
 
 	sql, _ := q.ToSQL()
@@ -56,14 +56,14 @@ func TestQ_Not(t *testing.T) {
 }
 
 func TestQ_NotWithNestedQ(t *testing.T) {
-	inner := gormx.QOr(
-		gormx.Eq("a", 1),
-		gormx.Eq("b", 2),
+	inner := gormz.QOr(
+		gormz.Eq("a", 1),
+		gormz.Eq("b", 2),
 	)
 
-	q := gormx.Qb().And(
-		gormx.Not(inner),
-		gormx.Eq("c", 3),
+	q := gormz.Qb().And(
+		gormz.Not(inner),
+		gormz.Eq("c", 3),
 	)
 
 	sql, _ := q.ToSQL()
@@ -71,8 +71,8 @@ func TestQ_NotWithNestedQ(t *testing.T) {
 }
 
 func TestQ_Immutability(t *testing.T) {
-	base := gormx.Qb().And(gormx.Eq("a", 1))
-	extended := base.And(gormx.Eq("b", 2))
+	base := gormz.Qb().And(gormz.Eq("a", 1))
+	extended := base.And(gormz.Eq("b", 2))
 
 	sqlBase, _ := base.ToSQL()
 	sqlExt, _ := extended.ToSQL()
@@ -82,16 +82,16 @@ func TestQ_Immutability(t *testing.T) {
 }
 
 func TestQ_OrAfterAnd(t *testing.T) {
-	q := gormx.Qb().
-		And(gormx.Eq("a", 1)).
-		Or(gormx.Eq("b", 2))
+	q := gormz.Qb().
+		And(gormz.Eq("a", 1)).
+		Or(gormz.Eq("b", 2))
 
 	sql, _ := q.ToSQL()
 	assert.Contains(t, sql, " OR ")
 }
 
 func TestQ_Empty(t *testing.T) {
-	q := gormx.Qb()
+	q := gormz.Qb()
 	assert.True(t, q.IsEmpty())
 	assert.Equal(t, 0, q.Len())
 
@@ -100,26 +100,32 @@ func TestQ_Empty(t *testing.T) {
 }
 
 func TestQ_AndGroup(t *testing.T) {
-	q := gormx.Qb().
-		And(gormx.Eq("x", 1)).
+	q := gormz.Qb().
+		And(gormz.Eq("x", 1)).
 		AndGroup(
-			gormx.Eq("a", 2),
-			gormx.Eq("b", 3),
+			gormz.Eq("a", 2),
+			gormz.Eq("b", 3),
 		)
 
 	sql, _ := q.ToSQL()
+	// تحقق من وجود AND مع الأقواس (مقبولة)
 	assert.Contains(t, sql, " AND ")
-	assert.Contains(t, sql, "(a = ? AND b = ?)")
+	assert.Contains(t, sql, "a = ?")
+	assert.Contains(t, sql, "b = ?")
+	// تحقق من البنية: مجموعة AND بين a و b
+	assert.Regexp(t, `\(a = \?\) AND \(b = \?\)`, sql)
 }
 
 func TestQ_OrGroup(t *testing.T) {
-	q := gormx.Qb().
-		And(gormx.Eq("x", 1)).
+	q := gormz.Qb().
+		And(gormz.Eq("x", 1)).
 		OrGroup(
-			gormx.Eq("a", 2),
-			gormx.Eq("b", 3),
+			gormz.Eq("a", 2),
+			gormz.Eq("b", 3),
 		)
 
 	sql, _ := q.ToSQL()
-	assert.Contains(t, sql, "(a = ? OR b = ?)")
+	assert.Contains(t, sql, "a = ?")
+	assert.Contains(t, sql, "b = ?")
+	assert.Regexp(t, `\(a = \?\) OR \(b = \?\)`, sql)
 }

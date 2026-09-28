@@ -1,4 +1,4 @@
-package gormx
+package gormz
 
 import (
 	"context"
@@ -14,12 +14,12 @@ type contextKey struct {
 	name string
 }
 
-var instanceKey = &contextKey{"gormx.instance"}
+var instanceKey = &contextKey{"gormz.instance"}
 
 // WithDB يضع Instance في الـ context.
 //
-//	ctx := gormx.WithDB(ctx, app)
-//	users, _ := gormx.FromContext[User](ctx).All()
+//	ctx := gormz.WithDB(ctx, app)
+//	users, _ := gormz.FromContext[User](ctx).All()
 func WithDB(ctx context.Context, i *Instance) context.Context {
 	if ctx == nil {
 		ctx = context.Background()
@@ -29,7 +29,7 @@ func WithDB(ctx context.Context, i *Instance) context.Context {
 
 // WithGormDB يضع *gorm.DB في الـ context.
 //
-//	ctx := gormx.WithGormDB(ctx, db)
+//	ctx := gormz.WithGormDB(ctx, db)
 func WithGormDB(ctx context.Context, d *gorm.DB) context.Context {
 	if d == nil {
 		panic(ErrNilDB)

@@ -172,7 +172,7 @@ advanced.WithTransaction(ctx, advanced.DefaultTxConfig(),
 err := advanced.WithTransaction(ctx, cfg, func(tx *advanced.Tx) error {
     panic("oops")  // ← rollback تلقائي
 })
-// err = "gormx/advanced: panic in transaction: oops"
+// err = "gormz/advanced: panic in transaction: oops"
 ```
 
 ### 4. Retry Logic

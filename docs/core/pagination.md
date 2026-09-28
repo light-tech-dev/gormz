@@ -9,7 +9,7 @@
 ### `Paginate(page, perPage)`
 
 ```go
-page, err := gormx.New[User]().
+page, err := gormz.New[User]().
     Filter("active", true).
     OrderBy("-created_at").
     Paginate(1, 20)
@@ -25,7 +25,7 @@ page, err := gormx.New[User]().
 ## 💡 مثال أساسي
 
 ```go
-result, err := gormx.New[User]().
+result, err := gormz.New[User]().
     Filter("active", true).
     Paginate(1, 20)
 
@@ -97,7 +97,7 @@ func ListUsers(c *fiber.Ctx) error {
     page, _ := strconv.Atoi(c.Query("page", "1"))
     perPage, _ := strconv.Atoi(c.Query("per_page", "20"))
 
-    result, err := gormx.New[User]().
+    result, err := gormz.New[User]().
         Filter("active", true).
         OrderBy("-created_at").
         Paginate(page, perPage)
@@ -204,7 +204,7 @@ type UserFilter struct {
 }
 
 func (s *Service) List(ctx context.Context, f UserFilter) (*advanced.PaginatedResult[User], error) {
-    q := gormx.FromContext[User](ctx).Filter("active", true)
+    q := gormz.FromContext[User](ctx).Filter("active", true)
 
     if f.Query != "" {
         q = q.Filter("name__icontains", f.Query)

@@ -10,7 +10,7 @@
 
 ```go
 subq := advanced.SubFrom[Order](
-    gormx.New[Order]().Select("user_id").Filter("total__gt", 1000),
+    gormz.New[Order]().Select("user_id").Filter("total__gt", 1000),
     "user_id",
 )
 ```
@@ -42,13 +42,13 @@ subq := advanced.SubRaw("SELECT id FROM users WHERE age > ?", 18)
 ```go
 // المستخدمون الذين لديهم طلبات > 1000
 subq := advanced.SubFrom[Order](
-    gormx.New[Order]().
+    gormz.New[Order]().
         Select("user_id").
         Filter("total__gt", 1000),
     "user_id",
 )
 
-users, err := gormx.New[User]().
+users, err := gormz.New[User]().
     Where("id IN ("+subq.SQL+")", subq.Args...).
     All()
 ```
@@ -59,7 +59,7 @@ users, err := gormx.New[User]().
 // المستخدمون الذين لديهم طلبات
 subq := advanced.SubRaw("SELECT 1 FROM orders WHERE orders.user_id = users.id")
 
-users, _ := gormx.New[User]().
+users, _ := gormz.New[User]().
     Where("EXISTS ("+subq.SQL+")").
     All()
 ```
@@ -70,7 +70,7 @@ users, _ := gormx.New[User]().
 // المستخدمون بدون طلبات
 subq := advanced.SubRaw("SELECT 1 FROM orders WHERE orders.user_id = users.id")
 
-users, _ := gormx.New[User]().
+users, _ := gormz.New[User]().
     Where("NOT EXISTS ("+subq.SQL+")").
     All()
 ```
@@ -81,7 +81,7 @@ users, _ := gormx.New[User]().
 // الطلبات التي total > متوسط الطلبات
 subq := advanced.SubRaw("SELECT AVG(total) FROM orders")
 
-orders, _ := gormx.New[Order]().
+orders, _ := gormz.New[Order]().
     Where("total > ("+subq.SQL+")").
     All()
 ```
@@ -90,7 +90,7 @@ orders, _ := gormx.New[Order]().
 
 ```go
 // الموظفون الذين راتبهم > متوسط راتب قسمهم
-users, _ := gormx.New[User]().
+users, _ := gormz.New[User]().
     Where(`
         salary > (
             SELECT AVG(salary)
@@ -111,12 +111,12 @@ Subqueries قد تكون بطيئة. استخدم Joins بدلًا منها:
 
 ```go
 // ❌ SubQuery
-users := gormx.New[User]().
+users := gormz.New[User]().
     Where("id IN (SELECT user_id FROM orders WHERE status = 'paid')").
     All()
 
 // ✅ Join
-users, _ := advanced.WithJoins[User](gormx.New[User]()).
+users, _ := advanced.WithJoins[User](gormz.New[User]()).
     Inner("orders", "orders.user_id = users.id").
     Filter("orders.status", "paid").
     All()
@@ -152,7 +152,7 @@ subq := advanced.SubRaw("SELECT * FROM " + userTable)
 
 ```go
 // ✅ آمن
-subq := advanced.SubFrom[User](gormx.New[User](), "id")
+subq := advanced.SubFrom[User](gormz.New[User](), "id")
 ```
 
 ---

@@ -5,26 +5,23 @@ import (
 	"testing"
 	"time"
 
-	"github.com/abdallah-elngar/gormx"
-	"github.com/abdallah-elngar/gormx/tests/fixtures"
+	"github.com/light-tech-dev/gormz"
+	"github.com/light-tech-dev/gormz/tests/fixtures"
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
 )
 
+// Aliases
 type User = fixtures.User
 type Order = fixtures.Order
 type Product = fixtures.Product
 
-// setupTestDB creates a new DB + migrations + cleanup.
-//
-// Each call creates a UNIQUE in-memory database to prevent
-// data leakage between tests.
+// setupTestDB ينشئ DB جديدة + migrations + cleanup.
 func setupTestDB(t *testing.T) {
 	t.Helper()
 
-	// ✅ اسم فريد لكل اختبار — يمنع تسرب البيانات
 	dsn := fmt.Sprintf("file:test_adv_%d?mode=memory&cache=shared", time.Now().UnixNano())
 
 	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{
@@ -34,16 +31,52 @@ func setupTestDB(t *testing.T) {
 
 	require.NoError(t, db.AutoMigrate(&User{}, &Order{}, &Product{}))
 
-	gormx.SetDB(db)
-	gormx.ClearRegistry()
+	gormz.SetDB(db)
+	gormz.ClearRegistry()
 
 	t.Cleanup(func() {
 		if sqlDB, err := db.DB(); err == nil && sqlDB != nil {
 			_ = sqlDB.Close()
 		}
-		gormx.ResetDB()
-		gormx.ClearRegistry()
+		gormz.ResetDB()
+		gormz.ClearRegistry()
 	})
+}
+
+// ✅ جديد — helper لفتح DB مخصصة للاختبارات
+//
+// يُستخدم في اختبارات locking (UserWithVersion) التي تحتاج
+// migration لموديل مخصص.
+//
+// الاستخدام:
+//
+//	db, err := gormOpenTest()
+//	require.NoError(t, err)
+//	require.NoError(t, db.AutoMigrate(&MyModel{}))
+//	gormz.SetDB(db)
+//
+//	t.Cleanup(func() {
+//	    gormz.ResetDB()
+//	    gormz.ClearRegistry()
+//	})
+func gormOpenTest() (*gorm.DB, error) {
+	dsn := fmt.Sprintf("file:test_gormz_%d?mode=memory&cache=shared", time.Now().UnixNano())
+
+	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// مهم لـ SQLite :memory: — استخدام اتصال واحد
+	sqlDB, err := db.DB()
+	if err != nil {
+		return nil, err
+	}
+	sqlDB.SetMaxOpenConns(1)
+
+	return db, nil
 }
 
 // seedUsers inserts 5 users.
@@ -59,7 +92,7 @@ func seedUsers(t *testing.T) []User {
 	}
 
 	for i := range users {
-		require.NoError(t, gormx.New[User]().Create(&users[i]))
+		require.NoError(t, gormz.New[User]().Create(&users[i]))
 	}
 
 	return users
@@ -78,7 +111,7 @@ func seedOrders(t *testing.T) []Order {
 	}
 
 	for i := range orders {
-		require.NoError(t, gormx.New[Order]().Create(&orders[i]))
+		require.NoError(t, gormz.New[Order]().Create(&orders[i]))
 	}
 
 	return orders

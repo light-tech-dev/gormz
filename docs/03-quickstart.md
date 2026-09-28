@@ -1,6 +1,6 @@
 # Quickstart — 10 دقائق
 
-> كل ما تحتاجه لتصبح منتجًا مع gormx.
+> كل ما تحتاجه لتصبح منتجًا مع gormz.
 
 ---
 
@@ -19,7 +19,7 @@ db.Model(&User{}).
 
 **استخدم**:
 ```go
-users, _ := gormx.New[User]().
+users, _ := gormz.New[User]().
     Filter("age__gt", 18).
     Filter("status", "active").
     OrderBy("name").
@@ -55,8 +55,8 @@ type User struct {
 
 ```go
 db, _ := gorm.Open(sqlite.Open("app.db"), &gorm.Config{})
-gormx.SetDB(db)
-gormx.MustMigrate[User]()
+gormz.SetDB(db)
+gormz.MustMigrate[User]()
 ```
 
 ---
@@ -67,7 +67,7 @@ gormx.MustMigrate[User]()
 
 ```go
 user := &User{Name: "Ali", Email: "ali@test.com", Age: 30}
-err := gormx.New[User]().Create(user)
+err := gormz.New[User]().Create(user)
 // user.ID = 1
 ```
 
@@ -78,27 +78,27 @@ users := []User{
     {Name: "Ali", Email: "ali@test.com"},
     {Name: "Sara", Email: "sara@test.com"},
 }
-err := gormx.New[User]().CreateMany(users)
+err := gormz.New[User]().CreateMany(users)
 ```
 
 ### Read — واحد
 
 ```go
-user, err := gormx.New[User]().Get(1)
+user, err := gormz.New[User]().Get(1)
 // user = *User
 ```
 
 ### Read — قائمة
 
 ```go
-users, err := gormx.New[User]().All()
+users, err := gormz.New[User]().All()
 // users = []User
 ```
 
 ### Read — بفلتر
 
 ```go
-users, err := gormx.New[User]().
+users, err := gormz.New[User]().
     Filter("active", true).
     Filter("age__gte", 18).
     All()
@@ -107,13 +107,13 @@ users, err := gormx.New[User]().
 ### Update
 
 ```go
-err := gormx.New[User]().Update(1, "age", 31)
+err := gormz.New[User]().Update(1, "age", 31)
 ```
 
 ### Delete
 
 ```go
-err := gormx.New[User]().Delete(1)
+err := gormz.New[User]().Delete(1)
 // Soft delete
 ```
 
@@ -150,31 +150,31 @@ err := gormx.New[User]().Delete(1)
 
 ```go
 // OR
-q := gormx.QOr(
-    gormx.Eq("status", "active"),
-    gormx.Eq("status", "pending"),
+q := gormz.QOr(
+    gormz.Eq("status", "active"),
+    gormz.Eq("status", "pending"),
 )
-users, _ := gormx.New[User]().Q(q).All()
+users, _ := gormz.New[User]().Q(q).All()
 
 // AND
-q := gormx.QAnd(
-    gormx.Eq("active", true),
-    gormx.Gt("age", 18),
+q := gormz.QAnd(
+    gormz.Eq("active", true),
+    gormz.Gt("age", 18),
 )
 
 // معقد
-q := gormx.Qb().And(
-    gormx.QOr(
-        gormx.Eq("status", "active"),
-        gormx.Eq("status", "pending"),
+q := gormz.Qb().And(
+    gormz.QOr(
+        gormz.Eq("status", "active"),
+        gormz.Eq("status", "pending"),
     ),
-    gormx.Gt("age", 18),
+    gormz.Gt("age", 18),
 )
 
 // NOT
-q := gormx.Qb().And(
-    gormx.Not(gormx.Eq("status", "deleted")),
-    gormx.Eq("active", true),
+q := gormz.Qb().And(
+    gormz.Not(gormz.Eq("status", "deleted")),
+    gormz.Eq("active", true),
 )
 ```
 
@@ -183,7 +183,7 @@ q := gormx.Qb().And(
 ## 📖 6. Pagination
 
 ```go
-page, _ := gormx.New[User]().
+page, _ := gormz.New[User]().
     Filter("active", true).
     OrderBy("-created_at").
     Paginate(1, 20)
@@ -220,7 +220,7 @@ func (u *User) BeforeCreate() error {
 ## 📖 8. Transactions
 
 ```go
-err := gormx.Transaction(context.Background(), func(tx *gorm.DB) error {
+err := gormz.Transaction(context.Background(), func(tx *gorm.DB) error {
     if err := tx.Create(&user).Error; err != nil {
         return err
     }

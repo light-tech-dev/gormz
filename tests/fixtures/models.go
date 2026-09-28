@@ -1,4 +1,4 @@
-// Package fixtures provides shared test models for gormx tests.
+// Package fixtures provides shared test models for gormz tests.
 package fixtures
 
 // User is a basic test model.

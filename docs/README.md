@@ -1,6 +1,6 @@
-# gormx — التوثيق
+# gormz — التوثيق
 
-> طبقة ORM بسيطة وقوية فوق GORM، مستوحاة من Django ORM.
+> طبقة ORM بسيطة وقوية فوق GORM، مستوحاة من modern ORM.
 
 ---
 

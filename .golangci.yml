@@ -1,5 +1,5 @@
 # ═══════════════════════════════════════════════════════════════════
-#  golangci-lint configuration for gormx
+#  golangci-lint configuration for gormz
 #  Docs: https://golangci-lint.run/usage/configuration/
 # ═══════════════════════════════════════════════════════════════════
 
@@ -220,10 +220,10 @@ linters-settings:
     settings:
       printf:
         funcs:
-          - (github.com/abdallah-elngar/gormx/internal.Logger).Infof
-          - (github.com/abdallah-elngar/gormx/internal.Logger).Warnf
-          - (github.com/abdallah-elngar/gormx/internal.Logger).Errorf
-          - (github.com/abdallah-elngar/gormx/internal.Logger).Debugf
+          - (github.com/light-tech-dev/gormz/internal.Logger).Infof
+          - (github.com/light-tech-dev/gormz/internal.Logger).Warnf
+          - (github.com/light-tech-dev/gormz/internal.Logger).Errorf
+          - (github.com/light-tech-dev/gormz/internal.Logger).Debugf
   
   # ─── staticcheck ─────────────────────────────────────────────────
   staticcheck:
@@ -256,19 +256,19 @@ linters-settings:
   
   # ─── gofumpt ─────────────────────────────────────────────────────
   gofumpt:
-    module-path: github.com/abdallah-elngar/gormx
+    module-path: github.com/light-tech-dev/gormz
     extra-rules: true
   
   # ─── goimports ───────────────────────────────────────────────────
   goimports:
-    local-prefixes: github.com/abdallah-elngar/gormx
+    local-prefixes: github.com/light-tech-dev/gormz
   
   # ─── gci (ترتيب الاستيرادات) ────────────────────────────────────
   gci:
     sections:
       - standard
       - default
-      - prefix(github.com/abdallah-elngar/gormx)
+      - prefix(github.com/light-tech-dev/gormz)
       - prefix(github.com/sanad)
       - blank
       - dot
@@ -279,7 +279,7 @@ linters-settings:
     locale: US
     ignore-words:
       - sanad
-      - gormx
+      - gormz
       - strftime
       - sqlite
       - postgres
@@ -475,11 +475,11 @@ linters-settings:
   # ─── contextcheck ────────────────────────────────────────────────
   contextcheck:
     check-function:
-      - (github.com/abdallah-elngar/gormx.QuerySet).All
-      - (github.com/abdallah-elngar/gormx.QuerySet).First
-      - (github.com/abdallah-elngar/gormx.QuerySet).Create
-      - (github.com/abdallah-elngar/gormx.QuerySet).Update
-      - (github.com/abdallah-elngar/gormx.QuerySet).Delete
+      - (github.com/light-tech-dev/gormz.QuerySet).All
+      - (github.com/light-tech-dev/gormz.QuerySet).First
+      - (github.com/light-tech-dev/gormz.QuerySet).Create
+      - (github.com/light-tech-dev/gormz.QuerySet).Update
+      - (github.com/light-tech-dev/gormz.QuerySet).Delete
   
   # ─── errorlint ───────────────────────────────────────────────────
   errorlint:
@@ -526,9 +526,9 @@ linters-settings:
     no-unaliased: true
     no-extra-aliases: false
     alias:
-      - pkg: github.com/abdallah-elngar/gormx
-        alias: gormx
-      - pkg: github.com/abdallah-elngar/gormx/advanced
+      - pkg: github.com/light-tech-dev/gormz
+        alias: gormz
+      - pkg: github.com/light-tech-dev/gormz/advanced
         alias: advanced
       - pkg: gorm.io/gorm
         alias: gorm
@@ -584,7 +584,7 @@ linters-settings:
       - github.com/pkg/*
     ignoreInterfaceRegexps:
       - ^gorm\.DB$
-      - ^gormx\.
+      - ^gormz\.
   
   # ─── wsl ─────────────────────────────────────────────────────────
   wsl:
@@ -693,7 +693,7 @@ issues:
     - linters:
         - stylecheck
       text: "ST1003: should not use underscores in Go names"
-      source: 'gormx\.'
+      source: 'gormz\.'
     
     # استثناءات revive
     - linters:

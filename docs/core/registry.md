@@ -17,10 +17,10 @@ pkg/order  →  import  →  pkg/user  ❌ cycle!
 
 ```go
 // في pkg/user
-var Users = gormx.Register[User]("user")
+var Users = gormz.Register[User]("user")
 
 // في pkg/order
-q, _ := gormx.Lookup[User]("user")  // ← لا import!
+q, _ := gormz.Lookup[User]("user")  // ← لا import!
 ```
 
 ---
@@ -30,7 +30,7 @@ q, _ := gormx.Lookup[User]("user")  // ← لا import!
 ### `Register[T](name)`
 
 ```go
-var Users = gormx.Register[User]("user")
+var Users = gormz.Register[User]("user")
 ```
 
 **يرفع panic** عند التكرار.
@@ -38,7 +38,7 @@ var Users = gormx.Register[User]("user")
 ### `TryRegister[T](name)`
 
 ```go
-q, err := gormx.TryRegister[User]("user")
+q, err := gormz.TryRegister[User]("user")
 if err != nil {
     log.Fatal(err)
 }
@@ -47,7 +47,7 @@ if err != nil {
 ### `Lookup[T](name)`
 
 ```go
-q, ok := gormx.Lookup[User]("user")
+q, ok := gormz.Lookup[User]("user")
 if !ok {
     log.Fatal("user not registered")
 }
@@ -56,7 +56,7 @@ if !ok {
 ### `MustLookup[T](name)`
 
 ```go
-q := gormx.MustLookup[User]("user")  // panic if not found
+q := gormz.MustLookup[User]("user")  // panic if not found
 ```
 
 ### Helpers
@@ -79,18 +79,18 @@ q := gormx.MustLookup[User]("user")  // panic if not found
 // apps/user/objects.go
 package user
 
-import "github.com/abdallah-elngar/gormx"
+import "github.com/light-tech-dev/gormz"
 
-var Users = gormx.Register[User]("user")
+var Users = gormz.Register[User]("user")
 
 // apps/order/service.go
 package order
 
-import "github.com/abdallah-elngar/gormx"
+import "github.com/light-tech-dev/gormz"
 
 func FindUserOrders(userID uint) ([]Order, error) {
     // احصل على QuerySet من Registry
-    users := gormx.MustLookup[User]("user")
+    users := gormz.MustLookup[User]("user")
 
     // استخدمه
     user, err := users.Get(userID)
@@ -98,7 +98,7 @@ func FindUserOrders(userID uint) ([]Order, error) {
         return nil, err
     }
 
-    return gormx.New[Order]().Filter("user_id", user.ID).All()
+    return gormz.New[Order]().Filter("user_id", user.ID).All()
 }
 ```
 
@@ -116,24 +116,24 @@ pkg/
 
 ```go
 // pkg/user/objects.go
-var Users = gormx.Register[User]("user")
+var Users = gormz.Register[User]("user")
 
 // pkg/order/service.go
 func CreateOrder(userID uint, total float64) (*Order, error) {
     // احصل على Users من registry
-    users := gormx.MustLookup[User]("user")
+    users := gormz.MustLookup[User]("user")
     user, err := users.Get(userID)
     if err != nil {
         return nil, err
     }
 
     order := &Order{UserID: user.ID, Total: total}
-    return order, gormx.New[Order]().Create(order)
+    return order, gormz.New[Order]().Create(order)
 }
 
 // pkg/report/service.go
 func TopUsers(limit int) ([]User, error) {
-    users := gormx.MustLookup[User]("user")
+    users := gormz.MustLookup[User]("user")
     return users.OrderBy("-created_at").Limit(limit).All()
 }
 ```
@@ -144,12 +144,12 @@ func TopUsers(limit int) ([]User, error) {
 // apps/user/manifest.go
 package user
 
-import "github.com/abdallah-elngar/gormx"
+import "github.com/light-tech-dev/gormz"
 
-var Objects *gormx.QuerySet[User]
+var Objects *gormz.QuerySet[User]
 
 func init() {
-    Objects = gormx.Register[User]("user")
+    Objects = gormz.Register[User]("user")
 }
 
 // استخدام لاحقًا
@@ -163,16 +163,16 @@ func Find(email string) (*User, error) {
 ```go
 func TestSomething(t *testing.T) {
     setupTestDB(t)
-    gormx.ClearRegistry()  // ← نظّف قبل
+    gormz.ClearRegistry()  // ← نظّف قبل
 
     // سجّل
-    Users := gormx.Register[User]("user")
+    Users := gormz.Register[User]("user")
 
     // استخدم
     Users.Create(&User{Name: "Ali"})
 
     // تأكد
-    assert.Equal(t, 1, gormx.RegisteredCount())
+    assert.Equal(t, 1, gormz.RegisteredCount())
 }
 ```
 
@@ -183,29 +183,29 @@ func TestSomething(t *testing.T) {
 ### 1. Duplicate Registration
 
 ```go
-gormx.Register[User]("user")  // ok
-gormx.Register[User]("user")  // panic!
+gormz.Register[User]("user")  // ok
+gormz.Register[User]("user")  // panic!
 ```
 
 **الحل**: استخدم `TryRegister` أو `Has()`:
 
 ```go
-if !gormx.Has("user") {
-    gormx.Register[User]("user")
+if !gormz.Has("user") {
+    gormz.Register[User]("user")
 }
 ```
 
 ### 2. Type Mismatch
 
 ```go
-gormx.Register[User]("user")
+gormz.Register[User]("user")
 
 // ❌ خطأ نوع
-q, ok := gormx.Lookup[Order]("user")
+q, ok := gormz.Lookup[Order]("user")
 // q = nil, ok = false
 
 // ✅ صحيح
-q, ok := gormx.Lookup[User]("user")
+q, ok := gormz.Lookup[User]("user")
 ```
 
 ### 3. Thread Safety
@@ -214,8 +214,8 @@ Registry **thread-safe**:
 
 ```go
 // آمن من goroutines متعددة
-go gormx.Register[User]("user")
-go gormx.Register[Order]("order")
+go gormz.Register[User]("user")
+go gormz.Register[Order]("order")
 ```
 
 ### 4. Global State
@@ -228,7 +228,7 @@ func TestMain(m *testing.M) {
     code := m.Run()
 
     // Cleanup
-    gormx.ClearRegistry()
+    gormz.ClearRegistry()
     os.Exit(code)
 }
 ```

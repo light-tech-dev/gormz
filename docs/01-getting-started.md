@@ -1,4 +1,4 @@
-# البدء السريع مع gormx
+# البدء السريع مع gormz
 
 > من الصفر إلى أول استعلام في 5 دقائق.
 
@@ -20,10 +20,10 @@ mkdir myapp && cd myapp
 go mod init myapp
 ```
 
-### 2. تثبيت gormx
+### 2. تثبيت gormz
 
 ```bash
-go get github.com/abdallah-elngar/gormx
+go get github.com/light-tech-dev/gormz
 go get gorm.io/driver/sqlite
 go get gorm.io/gorm
 ```
@@ -39,7 +39,7 @@ import (
     "fmt"
     "log"
 
-    "github.com/abdallah-elngar/gormx"
+    "github.com/light-tech-dev/gormz"
     "gorm.io/driver/sqlite"
     "gorm.io/gorm"
 )
@@ -59,23 +59,23 @@ func main() {
         log.Fatal(err)
     }
 
-    // 3. ربط gormx
-    gormx.SetDB(db)
+    // 3. ربط gormz
+    gormz.SetDB(db)
 
     // 4. ترحيل الموديلات
-    if err := gormx.Migrate[User](); err != nil {
+    if err := gormz.Migrate[User](); err != nil {
         log.Fatal(err)
     }
 
     // 5. إنشاء
     user := &User{Name: "علي", Email: "ali@test.com", Age: 30}
-    if err := gormx.New[User]().Create(user); err != nil {
+    if err := gormz.New[User]().Create(user); err != nil {
         log.Fatal(err)
     }
     fmt.Printf("Created user ID: %d\n", user.ID)
 
     // 6. قراءة
-    users, err := gormx.New[User]().
+    users, err := gormz.New[User]().
         Filter("age__gte", 18).
         OrderBy("name").
         All()
@@ -85,12 +85,12 @@ func main() {
     fmt.Printf("Found %d users\n", len(users))
 
     // 7. تعديل
-    if err := gormx.New[User]().Update(user.ID, "age", 31); err != nil {
+    if err := gormz.New[User]().Update(user.ID, "age", 31); err != nil {
         log.Fatal(err)
     }
 
     // 8. حذف
-    if err := gormx.New[User]().Delete(user.ID); err != nil {
+    if err := gormz.New[User]().Delete(user.ID); err != nil {
         log.Fatal(err)
     }
 
@@ -116,7 +116,7 @@ Found 1 users
 ## 🎯 ما تعلمته
 
 - ✅ الاتصال بقاعدة البيانات
-- ✅ ربط gormx
+- ✅ ربط gormz
 - ✅ ترحيل الموديلات
 - ✅ CRUD الأساسي
 - ✅ الفلاتر
@@ -140,27 +140,27 @@ Found 1 users
 ```go
 // Create
 user := &User{Name: "Ali", Email: "ali@test.com"}
-err := gormx.New[User]().Create(user)
+err := gormz.New[User]().Create(user)
 
 // Read — واحد
-u, err := gormx.New[User]().Get(1)
+u, err := gormz.New[User]().Get(1)
 
 // Read — قائمة
-users, err := gormx.New[User]().
+users, err := gormz.New[User]().
     Filter("active", true).
     OrderBy("-created_at").
     Limit(10).
     All()
 
 // Update
-err := gormx.New[User]().Update(1, "name", "New Name")
+err := gormz.New[User]().Update(1, "name", "New Name")
 
 // Delete
-err := gormx.New[User]().Delete(1)
+err := gormz.New[User]().Delete(1)
 
 // Count
-count, err := gormx.New[User]().Count()
+count, err := gormz.New[User]().Count()
 
 // Exists
-exists, err := gormx.New[User]().Filter("email", "ali@test.com").Exists()
+exists, err := gormz.New[User]().Filter("email", "ali@test.com").Exists()
 ```

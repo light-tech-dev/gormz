@@ -91,7 +91,7 @@ err := advanced.GroupBy[Order]("user_id").
 ```go
 // عدد المستخدمين الفريدين
 var count int64
-err := gormx.DB().Model(&Order{}).
+err := gormz.DB().Model(&Order{}).
     Distinct("user_id").
     Count(&count).Error
 ```

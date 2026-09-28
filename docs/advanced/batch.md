@@ -35,7 +35,7 @@ users := fetchUsers()  // 100K users
 
 result := advanced.ProcessBatch(ctx, users, advanced.DefaultBatchConfig(),
     func(batch []User) error {
-        return gormx.New[User]().CreateMany(batch)
+        return gormz.New[User]().CreateMany(batch)
     })
 
 fmt.Printf("Success: %d, Failed: %d\n", result.Success, result.Failed)
@@ -106,7 +106,7 @@ func ImportUsers(ctx context.Context, csvPath string) error {
         })
 
         if len(batch) >= 1000 {
-            if err := gormx.New[User]().CreateMany(batch); err != nil {
+            if err := gormz.New[User]().CreateMany(batch); err != nil {
                 return err
             }
             batch = batch[:0]
@@ -115,7 +115,7 @@ func ImportUsers(ctx context.Context, csvPath string) error {
 
     // آخر دفعة
     if len(batch) > 0 {
-        return gormx.New[User]().CreateMany(batch)
+        return gormz.New[User]().CreateMany(batch)
     }
 
     return nil
@@ -200,7 +200,7 @@ func ImportResumable(ctx context.Context, startID uint) error {
     offset := 0
 
     for {
-        items, err := gormx.New[User]().
+        items, err := gormz.New[User]().
             Filter("id__gt", startID).
             Limit(batchSize).
             All()

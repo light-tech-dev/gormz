@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/abdallah-elngar/gormx"
-	"github.com/abdallah-elngar/gormx/advanced"
+	"github.com/light-tech-dev/gormz"
+	"github.com/light-tech-dev/gormz/advanced"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -30,7 +30,7 @@ func TestBulkInsert(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	count, _ := gormx.New[User]().Count()
+	count, _ := gormz.New[User]().Count()
 	assert.Equal(t, int64(5000), count)
 }
 
@@ -64,10 +64,10 @@ func TestBulkUpsert(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	ali, _ := gormx.New[User]().Find("email", "ali@test.com")
+	ali, _ := gormz.New[User]().Find("email", "ali@test.com")
 	assert.Equal(t, 31, ali.Age)
 
-	count, _ := gormx.New[User]().Count()
+	count, _ := gormz.New[User]().Count()
 	assert.Equal(t, int64(2), count)
 }
 
@@ -84,7 +84,7 @@ func TestBulkDeleteByIDs(t *testing.T) {
 	ctx := context.Background()
 
 	for i := 0; i < 100; i++ {
-		gormx.New[User]().Create(&User{
+		gormz.New[User]().Create(&User{
 			Name:  fmt.Sprintf("User %d", i),
 			Email: fmt.Sprintf("user%d@test.com", i),
 		})
@@ -99,7 +99,7 @@ func TestBulkDeleteByIDs(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, int64(50), deleted)
 
-	count, _ := gormx.New[User]().Count()
+	count, _ := gormz.New[User]().Count()
 	assert.Equal(t, int64(50), count)
 }
 

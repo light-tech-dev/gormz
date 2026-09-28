@@ -1,10 +1,10 @@
-package gormx_test
+package gormz_test
 
 import (
 	"strings"
 	"testing"
 
-	"github.com/abdallah-elngar/gormx"
+	"github.com/light-tech-dev/gormz"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/sqlite"
@@ -27,16 +27,16 @@ func (u *UserWithHooks) BeforeCreate(tx *gorm.DB) error {
 func TestHooks_BeforeCreate(t *testing.T) {
 	db, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
 	require.NoError(t, db.AutoMigrate(&UserWithHooks{}))
-	gormx.SetDB(db)
+	gormz.SetDB(db)
 
 	user := &UserWithHooks{
 		Name:  "  Ali  ",
 		Email: "  ALI@TEST.COM  ",
 	}
 
-	require.NoError(t, gormx.New[UserWithHooks]().Create(user))
+	require.NoError(t, gormz.New[UserWithHooks]().Create(user))
 
-	got, _ := gormx.New[UserWithHooks]().Get(user.ID)
+	got, _ := gormz.New[UserWithHooks]().Get(user.ID)
 	assert.Equal(t, "Ali", got.Name)
 	assert.Equal(t, "ali@test.com", got.Email)
 }

@@ -1,4 +1,4 @@
-// Package internal provides internal helpers for gormx.
+// Package internal provides internal helpers for gormz.
 package internal
 
 // ═══════════════════════════════════════════════
@@ -7,7 +7,7 @@ package internal
 
 // RawClause يمثل شرط SQL خام.
 //
-// يُستخدم داخل gormx لتمرير SQL + args بدون validation.
+// يُستخدم داخل gormz لتمرير SQL + args بدون validation.
 //
 // ⚠️ للاستخدام الداخلي فقط.
 type RawClause struct {
@@ -31,4 +31,18 @@ func (r RawClause) String() string {
 		return r.SQL
 	}
 	return r.SQL
+}
+
+// ToSQL يرجّع SQL + args.
+//
+// ✅ يطبّق واجهة gormz.Clause.
+func (r RawClause) ToSQL() (string, []any) {
+	return r.SQL, r.Args
+}
+
+// IsNegated يرجّع false.
+//
+// ✅ يطبّق واجهة gormz.Clause.
+func (r RawClause) IsNegated() bool {
+	return false
 }

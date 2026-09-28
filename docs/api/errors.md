@@ -1,6 +1,6 @@
 # Errors — المرجع الكامل
 
-> كل الأخطاء في gormx.
+> كل الأخطاء في gormz.
 
 ---
 
@@ -11,13 +11,13 @@
 ```go
 var (
     ErrNotFound           = gorm.ErrRecordNotFound
-    ErrNotInitialized     = errors.New("gormx: DB not initialized")
-    ErrNilDB              = errors.New("gormx: nil DB")
-    ErrInvalidField       = errors.New("gormx: invalid field")
-    ErrInvalidQuery       = errors.New("gormx: invalid query")
-    ErrDangerousOperation = errors.New("gormx: dangerous operation without conditions")
-    ErrAlreadyRegistered  = errors.New("gormx: model already registered")
-    ErrNotFoundInRegistry = errors.New("gormx: model not found in registry")
+    ErrNotInitialized     = errors.New("gormz: DB not initialized")
+    ErrNilDB              = errors.New("gormz: nil DB")
+    ErrInvalidField       = errors.New("gormz: invalid field")
+    ErrInvalidQuery       = errors.New("gormz: invalid query")
+    ErrDangerousOperation = errors.New("gormz: dangerous operation without conditions")
+    ErrAlreadyRegistered  = errors.New("gormz: model already registered")
+    ErrNotFoundInRegistry = errors.New("gormz: model not found in registry")
 )
 ```
 
@@ -56,8 +56,8 @@ func (e *ValidationError) Unwrap() error  // → ErrInvalidField
 ### `IsNotFound(err)`
 
 ```go
-_, err := gormx.New[User]().Get(999)
-if gormx.IsNotFound(err) {
+_, err := gormz.New[User]().Get(999)
+if gormz.IsNotFound(err) {
     log.Println("user not found")
 }
 ```
@@ -65,8 +65,8 @@ if gormx.IsNotFound(err) {
 ### `IsValidation(err)`
 
 ```go
-q, err := gormx.New[User]().TryFilter("bad field", "x")
-if gormx.IsValidation(err) {
+q, err := gormz.New[User]().TryFilter("bad field", "x")
+if gormz.IsValidation(err) {
     log.Println("invalid field")
 }
 ```
@@ -78,9 +78,9 @@ if gormx.IsValidation(err) {
 ### مثال 1: Handle Not Found
 
 ```go
-user, err := gormx.New[User]().Get(1)
+user, err := gormz.New[User]().Get(1)
 if err != nil {
-    if gormx.IsNotFound(err) {
+    if gormz.IsNotFound(err) {
         return c.Status(404).JSON(fiber.Map{"error": "user not found"})
     }
     return c.Status(500).JSON(fiber.Map{"error": err.Error()})
@@ -90,9 +90,9 @@ if err != nil {
 ### مثال 2: Extract Validation
 
 ```go
-q, err := gormx.New[User]().TryFilter(field, value)
+q, err := gormz.New[User]().TryFilter(field, value)
 if err != nil {
-    var ve *gormx.ValidationError
+    var ve *gormz.ValidationError
     if errors.As(err, &ve) {
         return fmt.Errorf("field %q: %s", ve.Field, ve.Reason)
     }
@@ -103,8 +103,8 @@ if err != nil {
 ### مثال 3: Dangerous Operation
 
 ```go
-_, err := gormx.New[User]().UpdateMany(map[string]any{"active": false})
-if errors.Is(err, gormx.ErrDangerousOperation) {
+_, err := gormz.New[User]().UpdateMany(map[string]any{"active": false})
+if errors.Is(err, gormz.ErrDangerousOperation) {
     log.Println("refusing to update all users!")
 }
 ```
@@ -112,8 +112,8 @@ if errors.Is(err, gormx.ErrDangerousOperation) {
 ### مثال 4: Registry
 
 ```go
-q, err := gormx.TryRegister[User]("user")
-if errors.Is(err, gormx.ErrAlreadyRegistered) {
+q, err := gormz.TryRegister[User]("user")
+if errors.Is(err, gormz.ErrAlreadyRegistered) {
     log.Println("user already registered")
 }
 ```
@@ -122,7 +122,7 @@ if errors.Is(err, gormx.ErrAlreadyRegistered) {
 
 ## 🎯 Error Wrapping
 
-gormx يستخدم `%w` للتغليف:
+gormz يستخدم `%w` للتغليف:
 
 ```go
 // في المعاملات
@@ -155,16 +155,16 @@ errors.Is(err, ErrAlreadyRegistered)  // ✅
 func TestNotFound(t *testing.T) {
     setupTestDB(t)
 
-    _, err := gormx.New[User]().Get(999)
-    assert.True(t, gormx.IsNotFound(err))
+    _, err := gormz.New[User]().Get(999)
+    assert.True(t, gormz.IsNotFound(err))
     assert.ErrorIs(t, err, gorm.ErrRecordNotFound)
 }
 
 func TestValidationError(t *testing.T) {
-    _, err := gormx.New[User]().TryFilter("bad field", "x")
+    _, err := gormz.New[User]().TryFilter("bad field", "x")
     require.Error(t, err)
 
-    var ve *gormx.ValidationError
+    var ve *gormz.ValidationError
     require.True(t, errors.As(err, &ve))
     assert.Equal(t, "bad field", ve.Field)
 }

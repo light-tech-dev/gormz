@@ -38,7 +38,7 @@ jobs:
         with:
           files: ./coverage.out
           flags: unittests
-          name: codecov-gormx
+          name: codecov-gormz
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
 

@@ -36,7 +36,7 @@ jobs:
           mkdir -p _site
           godoc -http=:6060 &
           sleep 3
-          wget -r -np -N -E -p -k http://localhost:6060/pkg/github.com/abdallah-elngar/gormx/ -P _site || true
+          wget -r -np -N -E -p -k http://localhost:6060/pkg/github.com/light-tech-dev/gormz/ -P _site || true
           kill %1 || true
 
       - name: Setup Pages

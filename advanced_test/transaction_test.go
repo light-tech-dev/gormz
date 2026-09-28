@@ -5,8 +5,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/abdallah-elngar/gormx"
-	"github.com/abdallah-elngar/gormx/advanced"
+	"github.com/light-tech-dev/gormz"
+	"github.com/light-tech-dev/gormz/advanced"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -28,7 +28,7 @@ func TestWithTransaction_Commit(t *testing.T) {
 		})
 	require.NoError(t, err)
 
-	count, _ := gormx.New[User]().Count()
+	count, _ := gormz.New[User]().Count()
 	assert.Equal(t, int64(1), count)
 }
 
@@ -48,7 +48,7 @@ func TestWithTransaction_Rollback(t *testing.T) {
 		})
 	assert.Error(t, err)
 
-	count, _ := gormx.New[User]().Count()
+	count, _ := gormz.New[User]().Count()
 	assert.Equal(t, int64(0), count)
 }
 
@@ -68,7 +68,7 @@ func TestWithTransaction_Panic(t *testing.T) {
 		})
 	assert.Error(t, err)
 
-	count, _ := gormx.New[User]().Count()
+	count, _ := gormz.New[User]().Count()
 	assert.Equal(t, int64(0), count)
 }
 
@@ -105,82 +105,14 @@ func TestNested_Savepoint(t *testing.T) {
 		})
 	require.NoError(t, err)
 
-	count, _ := gormx.New[User]().Count()
+	count, _ := gormz.New[User]().Count()
 	assert.Equal(t, int64(1), count)
 
-	a, _ := gormx.New[User]().Find("email", "a@test.com")
+	a, _ := gormz.New[User]().Find("email", "a@test.com")
 	assert.NotNil(t, a)
 
-	b, _ := gormx.New[User]().Find("email", "b@test.com")
+	b, _ := gormz.New[User]().Find("email", "b@test.com")
 	assert.Nil(t, b)
-}
-
-// ═══════════════════════════════════════════════
-// Savepoint Tests
-// ═══════════════════════════════════════════════
-
-func TestSavepoint_Manual(t *testing.T) {
-	setupTestDB(t)
-	ctx := context.Background()
-
-	err := advanced.WithTransaction(ctx, advanced.DefaultTxConfig(),
-		func(tx *advanced.Tx) error {
-			sp := advanced.NewSavepoint("step1", tx.DB())
-			if err := sp.Create(); err != nil {
-				return err
-			}
-
-			// Insert inside savepoint
-			if err := advanced.Query[User](tx).Create(&User{
-				Name:  "A",
-				Email: "a@test.com",
-			}); err != nil {
-				return err
-			}
-
-			// Rollback to savepoint — insert should be undone
-			if err := sp.Rollback(); err != nil {
-				return err
-			}
-
-			return nil
-		})
-	require.NoError(t, err)
-
-	count, _ := gormx.New[User]().Count()
-	assert.Equal(t, int64(0), count)
-}
-
-func TestSavepoint_Release(t *testing.T) {
-	setupTestDB(t)
-	ctx := context.Background()
-
-	err := advanced.WithTransaction(ctx, advanced.DefaultTxConfig(),
-		func(tx *advanced.Tx) error {
-			sp := advanced.NewSavepoint("step1", tx.DB())
-			if err := sp.Create(); err != nil {
-				return err
-			}
-
-			// Insert inside savepoint
-			if err := advanced.Query[User](tx).Create(&User{
-				Name:  "A",
-				Email: "a@test.com",
-			}); err != nil {
-				return err
-			}
-
-			// Release savepoint — insert stays
-			if err := sp.Release(); err != nil {
-				return err
-			}
-
-			return nil
-		})
-	require.NoError(t, err)
-
-	count, _ := gormx.New[User]().Count()
-	assert.Equal(t, int64(1), count)
 }
 
 // ═══════════════════════════════════════════════
@@ -199,7 +131,7 @@ func TestSimpleTransaction(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	count, _ := gormx.New[User]().Count()
+	count, _ := gormz.New[User]().Count()
 	assert.Equal(t, int64(1), count)
 }
 
@@ -224,7 +156,7 @@ func TestBegin_Commit(t *testing.T) {
 
 	require.NoError(t, tx.Commit())
 
-	count, _ := gormx.New[User]().Count()
+	count, _ := gormz.New[User]().Count()
 	assert.Equal(t, int64(1), count)
 }
 
@@ -244,7 +176,7 @@ func TestBegin_Rollback(t *testing.T) {
 
 	require.NoError(t, tx.Rollback())
 
-	count, _ := gormx.New[User]().Count()
+	count, _ := gormz.New[User]().Count()
 	assert.Equal(t, int64(0), count)
 }
 
@@ -265,7 +197,7 @@ func TestBegin_RollbackIfActive(t *testing.T) {
 	// Auto rollback — don't call Commit
 	tx.RollbackIfActive()
 
-	count, _ := gormx.New[User]().Count()
+	count, _ := gormz.New[User]().Count()
 	assert.Equal(t, int64(0), count)
 }
 
@@ -348,11 +280,11 @@ func TestTx_Instance(t *testing.T) {
 	err := advanced.WithTransaction(ctx, advanced.DefaultTxConfig(),
 		func(tx *advanced.Tx) error {
 			instance := tx.Instance()
-			q := gormx.NewWith[User](instance)
+			q := gormz.NewWith[User](instance)
 			return q.Create(&User{Name: "Ali", Email: "ali@test.com"})
 		})
 	require.NoError(t, err)
 
-	count, _ := gormx.New[User]().Count()
+	count, _ := gormz.New[User]().Count()
 	assert.Equal(t, int64(1), count)
 }

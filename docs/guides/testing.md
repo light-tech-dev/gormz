@@ -4,9 +4,9 @@
 ## 🔟 `docs/guides/testing.md`
 
 ````markdown
-# Testing — اختبارات gormx
+# Testing — اختبارات gormz
 
-> كيف تختبر تطبيقك مع gormx.
+> كيف تختبر تطبيقك مع gormz.
 
 ---
 
@@ -15,7 +15,7 @@
 ### In-Memory SQLite
 
 ```go
-func setupTestDB(t *testing.T) *gormx.Instance {
+func setupTestDB(t *testing.T) *gormz.Instance {
     t.Helper()
 
     db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
@@ -25,9 +25,9 @@ func setupTestDB(t *testing.T) *gormx.Instance {
 
     require.NoError(t, db.AutoMigrate(&User{}, &Order{}))
 
-    inst := gormx.NewInstance(db)
-    gormx.SetDB(db)
-    gormx.ClearRegistry()
+    inst := gormz.NewInstance(db)
+    gormz.SetDB(db)
+    gormz.ClearRegistry()
 
     return inst
 }
@@ -57,7 +57,7 @@ func createTestUsers(t *testing.T, count int) []User {
         }
     }
 
-    require.NoError(t, gormx.New[User]().CreateMany(users))
+    require.NoError(t, gormz.New[User]().CreateMany(users))
     return users
 }
 ```
@@ -67,7 +67,7 @@ func createTestUsers(t *testing.T, count int) []User {
 ```go
 func cleanupTest(t *testing.T) {
     t.Cleanup(func() {
-        gormx.ClearRegistry()
+        gormz.ClearRegistry()
     })
 }
 ```
@@ -84,30 +84,30 @@ func TestUserCRUD(t *testing.T) {
 
     // Create
     user := &User{Name: "Ali", Email: "ali@test.com"}
-    err := gormx.New[User]().Create(user)
+    err := gormz.New[User]().Create(user)
     require.NoError(t, err)
     assert.NotZero(t, user.ID)
 
     // Read
-    got, err := gormx.New[User]().Get(user.ID)
+    got, err := gormz.New[User]().Get(user.ID)
     require.NoError(t, err)
     assert.Equal(t, "Ali", got.Name)
 
     // Update
-    err = gormx.New[User]().Update(user.ID, "name", "Ali Updated")
+    err = gormz.New[User]().Update(user.ID, "name", "Ali Updated")
     require.NoError(t, err)
 
     // Verify
-    got, _ = gormx.New[User]().Get(user.ID)
+    got, _ = gormz.New[User]().Get(user.ID)
     assert.Equal(t, "Ali Updated", got.Name)
 
     // Delete
-    err = gormx.New[User]().Delete(user.ID)
+    err = gormz.New[User]().Delete(user.ID)
     require.NoError(t, err)
 
     // Verify
-    _, err = gormx.New[User]().Get(user.ID)
-    assert.True(t, gormx.IsNotFound(err))
+    _, err = gormz.New[User]().Get(user.ID)
+    assert.True(t, gormz.IsNotFound(err))
 }
 ```
 
@@ -122,20 +122,20 @@ func TestUserFilters(t *testing.T) {
         {Name: "Sara", Age: 25, Active: true},
         {Name: "Omar", Age: 17, Active: false},
     }
-    require.NoError(t, gormx.New[User]().CreateMany(users))
+    require.NoError(t, gormz.New[User]().CreateMany(users))
 
     t.Run("filter active", func(t *testing.T) {
-        result, _ := gormx.New[User]().Filter("active", true).All()
+        result, _ := gormz.New[User]().Filter("active", true).All()
         assert.Len(t, result, 2)
     })
 
     t.Run("filter age >= 18", func(t *testing.T) {
-        result, _ := gormx.New[User]().Filter("age__gte", 18).All()
+        result, _ := gormz.New[User]().Filter("age__gte", 18).All()
         assert.Len(t, result, 2)
     })
 
     t.Run("compound", func(t *testing.T) {
-        result, _ := gormx.New[User]().
+        result, _ := gormz.New[User]().
             Filter("active", true).
             Filter("age__gte", 18).
             All()
@@ -165,7 +165,7 @@ func TestAgeFilter(t *testing.T) {
 
     for _, tt := range tests {
         t.Run(tt.name, func(t *testing.T) {
-            result, err := gormx.New[User]().
+            result, err := gormz.New[User]().
                 Filter(tt.filter, tt.value).
                 All()
             require.NoError(t, err)
@@ -189,7 +189,7 @@ func TestTransaction_Rollback(t *testing.T) {
         })
     assert.Error(t, err)
 
-    count, _ := gormx.New[User]().Count()
+    count, _ := gormz.New[User]().Count()
     assert.Equal(t, int64(0), count)
 }
 ```
@@ -203,10 +203,10 @@ func TestUser_TimeFilter(t *testing.T) {
     // بيانات مع تواريخ محددة
     past := User{Name: "Old", CreatedAt: time.Now().AddDate(0, -1, 0)}
     recent := User{Name: "New", CreatedAt: time.Now()}
-    gormx.New[User]().CreateMany([]User{past, recent})
+    gormz.New[User]().CreateMany([]User{past, recent})
 
     // فلترة
-    result, _ := gormx.New[User]().
+    result, _ := gormz.New[User]().
         Filter("created_at__gt", time.Now().AddDate(0, 0, -7)).
         All()
     assert.Len(t, result, 1)
@@ -222,12 +222,12 @@ func BenchmarkCreate(b *testing.B) {
         Logger: logger.Default.LogMode(logger.Silent),
     })
     db.AutoMigrate(&User{})
-    gormx.SetDB(db)
+    gormz.SetDB(db)
 
     b.ResetTimer()
     for i := 0; i < b.N; i++ {
         user := &User{Name: "Ali", Email: fmt.Sprintf("ali%d@test.com", i)}
-        gormx.New[User]().Create(user)
+        gormz.New[User]().Create(user)
     }
 }
 ```
@@ -237,7 +237,7 @@ func BenchmarkCreate(b *testing.B) {
 ```go
 import "github.com/testcontainers/testcontainers-go/modules/postgres"
 
-func setupPostgres(t *testing.T) *gormx.Instance {
+func setupPostgres(t *testing.T) *gormz.Instance {
     t.Helper()
 
     ctx := context.Background()
@@ -258,7 +258,7 @@ func setupPostgres(t *testing.T) *gormx.Instance {
     require.NoError(t, err)
     require.NoError(t, db.AutoMigrate(&User{}))
 
-    return gormx.NewInstance(db)
+    return gormz.NewInstance(db)
 }
 ```
 
@@ -272,12 +272,12 @@ func setupPostgres(t *testing.T) *gormx.Instance {
 // testutil/db.go
 package testutil
 
-func InMemoryDB(t *testing.T, models ...any) *gormx.Instance {
+func InMemoryDB(t *testing.T, models ...any) *gormz.Instance {
     t.Helper()
     db, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
     db.AutoMigrate(models...)
-    inst := gormx.NewInstance(db)
-    gormx.SetDB(db)
+    inst := gormz.NewInstance(db)
+    gormz.SetDB(db)
     return inst
 }
 
@@ -287,7 +287,7 @@ func Fixture[T any](t *testing.T, count int, fn func(int) T) []T {
     for i := 0; i < count; i++ {
         items[i] = fn(i)
     }
-    require.NoError(t, gormx.New[T]().CreateMany(items))
+    require.NoError(t, gormz.New[T]().CreateMany(items))
     return items
 }
 ```

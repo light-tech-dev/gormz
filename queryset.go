@@ -1,4 +1,4 @@
-package gormx
+package gormz
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/abdallah-elngar/gormx/internal"
+	"github.com/light-tech-dev/gormz/internal"
 	"gorm.io/gorm"
 )
 
@@ -18,7 +18,7 @@ import (
 //
 // كل method يعيد QuerySet جديد (immutable)، لذا آمن للاستخدام المتزامن.
 //
-//	users, _ := gormx.New[User]().
+//	users, _ := gormz.New[User]().
 //	    Filter("active", true).
 //	    Filter("age__gte", 18).
 //	    OrderBy("-created_at").
@@ -30,11 +30,11 @@ import (
 // طرق بادئتها Try ترجع الخطأ بدلًا من panic.
 // استخدمها عند التعامل مع مدخلات المستخدم:
 //
-//	q, err := gormx.New[User]().TryFilter(field, value)
+//	q, err := gormz.New[User]().TryFilter(field, value)
 type QuerySet[T any] struct {
 	db          *gorm.DB
 	ctx         context.Context
-	conditions  []any
+	conditions  []Clause
 	orders      []string
 	selects     []string
 	omits       []string
@@ -64,7 +64,7 @@ func newQuerySet[T any](d *gorm.DB) *QuerySet[T] {
 
 // New ينشئ QuerySet جديد للموديل T.
 //
-//	users, _ := gormx.New[User]().All()
+//	users, _ := gormz.New[User]().All()
 func New[T any]() *QuerySet[T] {
 	return newQuerySet[T](DB())
 }
@@ -75,7 +75,7 @@ func New[T any]() *QuerySet[T] {
 
 // WithContext يربط context.
 //
-//	users, _ := gormx.New[User]().
+//	users, _ := gormz.New[User]().
 //	    WithContext(ctx).
 //	    Filter("active", true).
 //	    All()
@@ -121,11 +121,29 @@ func (q *QuerySet[T]) TryFilter(field string, value any) (*QuerySet[T], error) {
 	}
 
 	nq := q.clone()
-	nq.conditions = append(nq.conditions, whereClause{
+	nq.conditions = append(nq.conditions, WhereClause{
 		sql:  clause.SQL,
 		args: clause.Args,
 	})
 	return nq, nil
+}
+
+// FilterIf يضيف شرطًا فقط إذا كان cond صحيحًا.
+//
+//	.FilterIf(search != "", "name__icontains", search)
+func (q *QuerySet[T]) FilterIf(cond bool, field string, value any) *QuerySet[T] {
+	if !cond {
+		return q
+	}
+	return q.Filter(field, value)
+}
+
+// TryFilterIf مثل FilterIf لكن يرجّع خطأ.
+func (q *QuerySet[T]) TryFilterIf(cond bool, field string, value any) (*QuerySet[T], error) {
+	if !cond {
+		return q, nil
+	}
+	return q.TryFilter(field, value)
 }
 
 // Exclude عكس Filter. يpanic عند خطأ.
@@ -145,7 +163,7 @@ func (q *QuerySet[T]) TryExclude(field string, value any) (*QuerySet[T], error) 
 	}
 
 	nq := q.clone()
-	nq.conditions = append(nq.conditions, whereClause{
+	nq.conditions = append(nq.conditions, WhereClause{
 		sql:  clause.SQL,
 		args: clause.Args,
 	})
@@ -165,11 +183,11 @@ func (q *QuerySet[T]) Where(sql string, args ...any) *QuerySet[T] {
 
 // Q يضيف مجموعة شروط معقدة.
 //
-//	q := gormx.QOr(
-//	    gormx.Eq("status", "active"),
-//	    gormx.Eq("status", "pending"),
+//	q := gormz.Or(
+//	    gormz.Eq("status", "active"),
+//	    gormz.Eq("status", "pending"),
 //	)
-//	users, _ := gormx.New[User]().Q(q).All()
+//	users, _ := gormz.New[User]().Q(q).All()
 func (q *QuerySet[T]) Q(builder *Q) *QuerySet[T] {
 	if builder == nil {
 		return q
@@ -185,9 +203,10 @@ func (q *QuerySet[T]) Q(builder *Q) *QuerySet[T] {
 
 // OrderBy يضيف ترتيبًا. يpanic عند خطأ.
 //
-//	.OrderBy("name")              → name ASC
-//	.OrderBy("-created_at")       → created_at DESC
-//	.OrderBy("status", "-date")   → status ASC, date DESC
+//	.OrderBy("name")                       → name ASC
+//	.OrderBy("-created_at")                → created_at DESC
+//	.OrderBy("status", "-date")            → status ASC, date DESC
+//	.OrderBy("name NULLS FIRST")           → name ASC NULLS FIRST
 func (q *QuerySet[T]) OrderBy(fields ...string) *QuerySet[T] {
 	nq, err := q.TryOrderBy(fields...)
 	if err != nil {
@@ -200,25 +219,55 @@ func (q *QuerySet[T]) OrderBy(fields ...string) *QuerySet[T] {
 func (q *QuerySet[T]) TryOrderBy(fields ...string) (*QuerySet[T], error) {
 	nq := q.clone()
 	for _, f := range fields {
-		f = strings.TrimSpace(f)
-		if f == "" {
+		parsed, err := parseOrderField(f)
+		if err != nil {
+			return nil, err
+		}
+		if parsed == "" {
 			continue
 		}
-
-		if strings.HasPrefix(f, "-") {
-			col := strings.TrimPrefix(f, "-")
-			if err := internal.ValidateField(col); err != nil {
-				return nil, err
-			}
-			nq.orders = append(nq.orders, col+" DESC")
-		} else {
-			if err := internal.ValidateField(f); err != nil {
-				return nil, err
-			}
-			nq.orders = append(nq.orders, f+" ASC")
-		}
+		nq.orders = append(nq.orders, parsed)
 	}
 	return nq, nil
+}
+
+// parseOrderField يحوّل "field", "-field", "field NULLS FIRST" إلى SQL ORDER BY.
+func parseOrderField(f string) (string, error) {
+	f = strings.TrimSpace(f)
+	if f == "" {
+		return "", nil
+	}
+
+	// DESC prefix
+	desc := false
+	if strings.HasPrefix(f, "-") {
+		desc = true
+		f = strings.TrimPrefix(f, "-")
+	}
+
+	// تحقق من وجود " NULLS FIRST" أو " NULLS LAST"
+	upperF := strings.ToUpper(f)
+	if idx := strings.Index(upperF, " NULLS "); idx > 0 {
+		col := f[:idx]
+		nullsClause := f[idx+1:] // "NULLS FIRST"
+		if err := internal.ValidateField(col); err != nil {
+			return "", err
+		}
+		dir := "ASC"
+		if desc {
+			dir = "DESC"
+		}
+		return col + " " + dir + " " + strings.ToUpper(nullsClause), nil
+	}
+
+	if err := internal.ValidateField(f); err != nil {
+		return "", err
+	}
+
+	if desc {
+		return f + " DESC", nil
+	}
+	return f + " ASC", nil
 }
 
 // Limit يحدد عدد النتائج.
@@ -464,7 +513,7 @@ func (q *QuerySet[T]) Window(exprs ...string) *QuerySet[T] {
 
 // All يرجّع كل النتائج.
 //
-//	users, err := gormx.New[User]().Filter("active", true).All()
+//	users, err := gormz.New[User]().Filter("active", true).All()
 func (q *QuerySet[T]) All() ([]T, error) {
 	var results []T
 	err := q.build().Find(&results).Error
@@ -514,7 +563,7 @@ func (q *QuerySet[T]) Last() (*T, error) {
 
 // Get يرجّع سجلًا بالـ ID.
 //
-//	user, err := gormx.New[User]().Get(1)
+//	user, err := gormz.New[User]().Get(1)
 //
 // يرجّع NotFoundError إذا لم يوجد.
 func (q *QuerySet[T]) Get(id any) (*T, error) {
@@ -544,7 +593,7 @@ func (q *QuerySet[T]) GetOrNil(id any) (*T, error) {
 
 // Find يبحث بحقل = قيمة.
 //
-//	user, err := gormx.New[User]().Find("email", "ali@example.com")
+//	user, err := gormz.New[User]().Find("email", "ali@example.com")
 func (q *QuerySet[T]) Find(field string, value any) (*T, error) {
 	if err := internal.ValidateField(field); err != nil {
 		return nil, err
@@ -588,29 +637,23 @@ func (q *QuerySet[T]) Count() (int64, error) {
 
 // Exists يفحص وجود أي سجل.
 //
-// يستخدم EXISTS في SQL (أسرع من COUNT).
+// يستخدم LIMIT 1 + COUNT (أسرع من subquery).
 func (q *QuerySet[T]) Exists() (bool, error) {
 	var zero T
-	var exists bool
+	var count int64
 
-	// نستخدم SELECT EXISTS(SELECT 1 FROM ... LIMIT 1)
-	subquery := q.build().
+	err := q.build().
 		Model(&zero).
-		Select("1").
-		Limit(1)
+		Limit(1).
+		Count(&count).Error
 
-	err := q.db.WithContext(q.ctx).
-		Model(&zero).
-		Select("EXISTS(?)", subquery).
-		Scan(&exists).Error
-
-	return exists, err
+	return count > 0, err
 }
 
 // Pluck يستخرج عمودًا واحدًا.
 //
 //	var names []string
-//	err := gormx.New[User]().Filter("active", true).Pluck("name", &names)
+//	err := gormz.New[User]().Filter("active", true).Pluck("name", &names)
 func (q *QuerySet[T]) Pluck(field string, dest any) error {
 	if err := internal.ValidateField(field); err != nil {
 		return err
@@ -625,11 +668,11 @@ func (q *QuerySet[T]) Pluck(field string, dest any) error {
 //	    Count  int64
 //	}
 //	var stats []UserStats
-//	gormx.New[User]().SelectRaw("status", "COUNT(*) as count").
+//	gormz.New[User]().SelectRaw("status", "COUNT(*) as count").
 //	    ScanInto(&stats)
 func (q *QuerySet[T]) ScanInto(dest any) error {
 	if dest == nil {
-		return fmt.Errorf("gormx: nil destination")
+		return fmt.Errorf("gormz: nil destination")
 	}
 	return q.build().Scan(dest).Error
 }
@@ -654,10 +697,10 @@ func (q *QuerySet[T]) Take() (*T, error) {
 // Create ينشئ سجلًا.
 //
 //	user := &User{Name: "Ali", Email: "ali@test.com"}
-//	err := gormx.New[User]().Create(user)
+//	err := gormz.New[User]().Create(user)
 func (q *QuerySet[T]) Create(item *T) error {
 	if item == nil {
-		return fmt.Errorf("gormx: nil item")
+		return fmt.Errorf("gormz: nil item")
 	}
 	return q.db.WithContext(q.ctx).Create(item).Error
 }
@@ -673,7 +716,7 @@ func (q *QuerySet[T]) CreateMany(items []T) error {
 // CreateInBatches ينشئ عدة سجلات بدفعات.
 //
 //	users := make([]User, 100000)
-//	err := gormx.New[User]().CreateInBatches(users, 1000)
+//	err := gormz.New[User]().CreateInBatches(users, 1000)
 func (q *QuerySet[T]) CreateInBatches(items []T, batchSize int) error {
 	if len(items) == 0 {
 		return nil
@@ -687,7 +730,7 @@ func (q *QuerySet[T]) CreateInBatches(items []T, batchSize int) error {
 // Save يحفظ سجلًا (create أو update).
 func (q *QuerySet[T]) Save(item *T) error {
 	if item == nil {
-		return fmt.Errorf("gormx: nil item")
+		return fmt.Errorf("gormz: nil item")
 	}
 	return q.db.WithContext(q.ctx).Save(item).Error
 }
@@ -749,6 +792,9 @@ func (q *QuerySet[T]) Delete(id any) error {
 // DeleteMany يحذف عدة سجلات.
 //
 // ⚠️ يتطلب conditions.
+// DeleteMany يحذف عدة سجلات.
+//
+// ⚠️ يتطلب conditions.
 func (q *QuerySet[T]) DeleteMany() (int64, error) {
 	if len(q.conditions) == 0 {
 		return 0, NewDangerousError("DeleteMany", "requires at least one condition")
@@ -757,18 +803,29 @@ func (q *QuerySet[T]) DeleteMany() (int64, error) {
 	var zero T
 	conn := q.db.WithContext(q.ctx).Model(&zero)
 
-	// طبّق conditions
+	// Conditions
 	for _, c := range q.conditions {
+		if c == nil {
+			continue
+		}
 		switch v := c.(type) {
-		case internal.RawClause:
-			conn = conn.Where(v.SQL, v.Args...)
-		case whereClause:
+		case WhereClause:
 			conn = conn.Where(v.sql, v.args...)
-		case notClause:
-			conn = conn.Where("NOT ("+v.sql+")", v.args...)
+
+		case NotClause:
+			sql, args := v.ToSQL()
+			conn = conn.Where(sql, args...)
+
 		case *Q:
 			sql, args := v.toSQL()
 			conn = conn.Where(sql, args...)
+
+		default:
+			// أي Clause عام (مثل internal.RawClause)
+			sql, args := c.ToSQL()
+			if sql != "" {
+				conn = conn.Where(sql, args...)
+			}
 		}
 	}
 
@@ -919,14 +976,14 @@ func (q *QuerySet[T]) DryRun() *gorm.DB {
 // ═══════════════════════════════════════════════
 
 // Conditions يرجّع نسخة من الشروط.
-func (q *QuerySet[T]) Conditions() []any {
-	out := make([]any, len(q.conditions))
+func (q *QuerySet[T]) Conditions() []Clause {
+	out := make([]Clause, len(q.conditions))
 	copy(out, q.conditions)
 	return out
 }
 
 // AddCondition يضيف شرطًا داخليًا.
-func (q *QuerySet[T]) AddCondition(c any) *QuerySet[T] {
+func (q *QuerySet[T]) AddCondition(c Clause) *QuerySet[T] {
 	nq := q.clone()
 	nq.conditions = append(nq.conditions, c)
 	return nq
@@ -1017,7 +1074,7 @@ type joinClause struct {
 // clone ينسخ QuerySet (immutable).
 func (q *QuerySet[T]) clone() *QuerySet[T] {
 	nq := *q
-	nq.conditions = append([]any{}, q.conditions...)
+	nq.conditions = append([]Clause{}, q.conditions...)
 	nq.orders = append([]string{}, q.orders...)
 	nq.selects = append([]string{}, q.selects...)
 	nq.omits = append([]string{}, q.omits...)
@@ -1052,17 +1109,29 @@ func (q *QuerySet[T]) build() *gorm.DB {
 	}
 
 	// Conditions
+	// Conditions
 	for _, c := range q.conditions {
+		if c == nil {
+			continue
+		}
 		switch v := c.(type) {
-		case internal.RawClause:
-			conn = conn.Where(v.SQL, v.Args...)
-		case whereClause:
+		case WhereClause:
 			conn = conn.Where(v.sql, v.args...)
-		case notClause:
-			conn = conn.Where("NOT ("+v.sql+")", v.args...)
+
+		case NotClause:
+			sql, args := v.ToSQL()
+			conn = conn.Where(sql, args...)
+
 		case *Q:
 			sql, args := v.toSQL()
 			conn = conn.Where(sql, args...)
+
+		default:
+			// أي Clause عام (مثل internal.RawClause)
+			sql, args := c.ToSQL()
+			if sql != "" {
+				conn = conn.Where(sql, args...)
+			}
 		}
 	}
 

@@ -4,7 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/abdallah-elngar/gormx"
+	"github.com/light-tech-dev/gormz"
 )
 
 // ═══════════════════════════════════════════════
@@ -25,7 +25,7 @@ const (
 
 // UnionQuery يمثل استعلام Union.
 type UnionQuery[T any] struct {
-	queries []*gormx.QuerySet[T]
+	queries []*gormz.QuerySet[T]
 	utype   UnionType
 	orders  []string
 	limit   int
@@ -33,7 +33,7 @@ type UnionQuery[T any] struct {
 }
 
 // Union ينشئ Union (يحذف المكرر).
-func Union[T any](queries ...*gormx.QuerySet[T]) *UnionQuery[T] {
+func Union[T any](queries ...*gormz.QuerySet[T]) *UnionQuery[T] {
 	return &UnionQuery[T]{
 		queries: queries,
 		utype:   UnionDistinct,
@@ -41,7 +41,7 @@ func Union[T any](queries ...*gormx.QuerySet[T]) *UnionQuery[T] {
 }
 
 // UnionAll ينشئ Union All (يحتفظ بالمكرر).
-func UnionAll[T any](queries ...*gormx.QuerySet[T]) *UnionQuery[T] {
+func UnionAll[T any](queries ...*gormz.QuerySet[T]) *UnionQuery[T] {
 	return &UnionQuery[T]{
 		queries: queries,
 		utype:   UnionAllType,
@@ -49,7 +49,7 @@ func UnionAll[T any](queries ...*gormx.QuerySet[T]) *UnionQuery[T] {
 }
 
 // Add يضيف استعلامًا.
-func (uq *UnionQuery[T]) Add(q *gormx.QuerySet[T]) *UnionQuery[T] {
+func (uq *UnionQuery[T]) Add(q *gormz.QuerySet[T]) *UnionQuery[T] {
 	uq.queries = append(uq.queries, q)
 	return uq
 }
@@ -79,7 +79,7 @@ func (uq *UnionQuery[T]) All() ([]T, error) {
 	}
 
 	var zero T
-	db := gormx.DB().Model(&zero)
+	db := gormz.DB().Model(&zero)
 
 	var parts []string
 	var allArgs []any

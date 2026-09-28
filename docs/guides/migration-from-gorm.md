@@ -1,12 +1,12 @@
-# Migration من GORM إلى gormx
+# Migration من GORM إلى gormz
 
 > دليل كامل للانتقال التدريجي.
 
 ---
 
-## 🎯 لماذا gormx؟
+## 🎯 لماذا gormz؟
 
-| الميزة | GORM | gormx |
+| الميزة | GORM | gormz |
 |--------|------|-------|
 | Type Safety | ❌ `interface{}` | ✅ Generics |
 | Lookups | ❌ String | ✅ `__gt`, `__in` |
@@ -22,71 +22,71 @@
 
 ### الاستعلامات
 
-| GORM | gormx |
+| GORM | gormz |
 |------|-------|
-| `db.Where("age > ?", 18).Find(&users)` | `gormx.New[User]().Filter("age__gt", 18).All()` |
-| `db.Where("name = ?", "Ali").First(&user)` | `gormx.New[User]().Find("name", "Ali")` |
-| `db.Where("id = ?", 1).First(&user)` | `gormx.New[User]().Get(1)` |
-| `db.Where("id IN ?", ids).Find(&users)` | `gormx.New[User]().Filter("id__in", ids).All()` |
-| `db.Where("name LIKE ?", "%Ali%").Find(&users)` | `gormx.New[User]().Filter("name__contains", "Ali").All()` |
-| `db.Where("deleted_at IS NULL").Find(&users)` | `gormx.New[User]().Filter("deleted_at__isnull", true).All()` |
-| `db.Order("name").Find(&users)` | `gormx.New[User]().OrderBy("name").All()` |
-| `db.Order("name DESC").Find(&users)` | `gormx.New[User]().OrderBy("-name").All()` |
-| `db.Limit(10).Offset(20).Find(&users)` | `gormx.New[User]().Limit(10).Offset(20).All()` |
-| `db.Count(&count)` | `gormx.New[User]().Count()` |
-| `db.Select("id", "name").Find(&users)` | `gormx.New[User]().Select("id", "name").All()` |
-| `db.Preload("Orders").Find(&users)` | `gormx.New[User]().Preload("Orders").All()` |
-| `db.Unscoped().Find(&users)` | `gormx.New[User]().WithDeleted().All()` |
+| `db.Where("age > ?", 18).Find(&users)` | `gormz.New[User]().Filter("age__gt", 18).All()` |
+| `db.Where("name = ?", "Ali").First(&user)` | `gormz.New[User]().Find("name", "Ali")` |
+| `db.Where("id = ?", 1).First(&user)` | `gormz.New[User]().Get(1)` |
+| `db.Where("id IN ?", ids).Find(&users)` | `gormz.New[User]().Filter("id__in", ids).All()` |
+| `db.Where("name LIKE ?", "%Ali%").Find(&users)` | `gormz.New[User]().Filter("name__contains", "Ali").All()` |
+| `db.Where("deleted_at IS NULL").Find(&users)` | `gormz.New[User]().Filter("deleted_at__isnull", true).All()` |
+| `db.Order("name").Find(&users)` | `gormz.New[User]().OrderBy("name").All()` |
+| `db.Order("name DESC").Find(&users)` | `gormz.New[User]().OrderBy("-name").All()` |
+| `db.Limit(10).Offset(20).Find(&users)` | `gormz.New[User]().Limit(10).Offset(20).All()` |
+| `db.Count(&count)` | `gormz.New[User]().Count()` |
+| `db.Select("id", "name").Find(&users)` | `gormz.New[User]().Select("id", "name").All()` |
+| `db.Preload("Orders").Find(&users)` | `gormz.New[User]().Preload("Orders").All()` |
+| `db.Unscoped().Find(&users)` | `gormz.New[User]().WithDeleted().All()` |
 
 ### الكتابة
 
-| GORM | gormx |
+| GORM | gormz |
 |------|-------|
-| `db.Create(&user)` | `gormx.New[User]().Create(&user)` |
-| `db.Create(&users)` | `gormx.New[User]().CreateMany(users)` |
-| `db.Save(&user)` | `gormx.New[User]().Save(&user)` |
-| `db.Model(&user).Update("name", "x")` | `gormx.New[User]().Update(id, "name", "x")` |
-| `db.Where("active = ?", false).Delete(&User{})` | `gormx.New[User]().Filter("active", false).DeleteMany()` |
-| `db.Unscoped().Delete(&user, 1)` | `gormx.New[User]().HardDelete(1)` |
-| `db.Model(&user).Update("deleted_at", nil)` | `gormx.New[User]().Restore(1)` |
+| `db.Create(&user)` | `gormz.New[User]().Create(&user)` |
+| `db.Create(&users)` | `gormz.New[User]().CreateMany(users)` |
+| `db.Save(&user)` | `gormz.New[User]().Save(&user)` |
+| `db.Model(&user).Update("name", "x")` | `gormz.New[User]().Update(id, "name", "x")` |
+| `db.Where("active = ?", false).Delete(&User{})` | `gormz.New[User]().Filter("active", false).DeleteMany()` |
+| `db.Unscoped().Delete(&user, 1)` | `gormz.New[User]().HardDelete(1)` |
+| `db.Model(&user).Update("deleted_at", nil)` | `gormz.New[User]().Restore(1)` |
 
 ### Transactions
 
-| GORM | gormx |
+| GORM | gormz |
 |------|-------|
-| `db.Transaction(func(tx) { ... })` | `gormx.Transaction(ctx, func(tx) { ... })` |
+| `db.Transaction(func(tx) { ... })` | `gormz.Transaction(ctx, func(tx) { ... })` |
 | `tx := db.Begin(); ...; tx.Commit()` | `tx, _ := advanced.Begin(ctx, cfg); tx.Commit()` |
 | `tx.Rollback()` | `tx.Rollback()` |
 | Retry | `advanced.WithTransaction(ctx, cfg, fn)` |
 
 ### Q Builder
 
-| GORM | gormx |
+| GORM | gormz |
 |------|-------|
-| `db.Where("a = ? OR b = ?", 1, 2)` | `gormx.QOr(gormx.Eq("a", 1), gormx.Eq("b", 2))` |
-| `db.Where("a = ? AND b = ?", 1, 2)` | `gormx.QAnd(gormx.Eq("a", 1), gormx.Eq("b", 2))` |
-| `db.Where("NOT (a = ?)", 1)` | `gormx.Not(gormx.Eq("a", 1))` |
-| Complex nested | `gormx.Qb().And(gormx.QOr(...), ...)` |
+| `db.Where("a = ? OR b = ?", 1, 2)` | `gormz.QOr(gormz.Eq("a", 1), gormz.Eq("b", 2))` |
+| `db.Where("a = ? AND b = ?", 1, 2)` | `gormz.QAnd(gormz.Eq("a", 1), gormz.Eq("b", 2))` |
+| `db.Where("NOT (a = ?)", 1)` | `gormz.Not(gormz.Eq("a", 1))` |
+| Complex nested | `gormz.Qb().And(gormz.QOr(...), ...)` |
 
 ### Aggregations
 
-| GORM | gormx |
+| GORM | gormz |
 |------|-------|
-| `db.Model(&Order{}).Select("SUM(total)").Scan(&sum)` | `gormx.New[Order]().Sum("total")` |
-| `db.Model(&Order{}).Select("AVG(total)").Scan(&avg)` | `gormx.New[Order]().Avg("total")` |
-| `db.Model(&Order{}).Select("MIN(total)").Scan(&min)` | `gormx.New[Order]().Min("total")` |
-| `db.Model(&Order{}).Select("MAX(total)").Scan(&max)` | `gormx.New[Order]().Max("total")` |
+| `db.Model(&Order{}).Select("SUM(total)").Scan(&sum)` | `gormz.New[Order]().Sum("total")` |
+| `db.Model(&Order{}).Select("AVG(total)").Scan(&avg)` | `gormz.New[Order]().Avg("total")` |
+| `db.Model(&Order{}).Select("MIN(total)").Scan(&min)` | `gormz.New[Order]().Min("total")` |
+| `db.Model(&Order{}).Select("MAX(total)").Scan(&max)` | `gormz.New[Order]().Max("total")` |
 | `db.Model(&Order{}).Group("user_id").Select("user_id, COUNT(*)").Scan(&stats)` | `advanced.GroupBy[Order]("user_id").Count("*", "cnt").ScanInto(&stats)` |
 
 ### Joins
 
-| GORM | gormx |
+| GORM | gormz |
 |------|-------|
-| `db.Joins("JOIN orders ON orders.user_id = users.id").Find(&users)` | `advanced.WithJoins[User](gormx.New[User]()).Inner("orders", "orders.user_id = users.id").All()` |
+| `db.Joins("JOIN orders ON orders.user_id = users.id").Find(&users)` | `advanced.WithJoins[User](gormz.New[User]()).Inner("orders", "orders.user_id = users.id").All()` |
 
 ### Bulk
 
-| GORM | gormx |
+| GORM | gormz |
 |------|-------|
 | `db.CreateInBatches(users, 1000)` | `advanced.BulkInsert[User](ctx, users, cfg)` |
 | `db.Clauses(clause.OnConflict{...}).Create(&users)` | `advanced.BulkUpsert[User](ctx, users, cfg)` |
@@ -98,10 +98,10 @@
 ### المرحلة 1: التثبيت
 
 ```bash
-go get github.com/abdallah-elngar/gormx
+go get github.com/light-tech-dev/gormz
 ```
 
-### المرحلة 2: ربط gormx
+### المرحلة 2: ربط gormz
 
 **قبل**:
 ```go
@@ -115,7 +115,7 @@ func main() {
 ```go
 func main() {
     db, _ := gorm.Open(...)
-    gormx.SetDB(db)  // ← أضف هذا
+    gormz.SetDB(db)  // ← أضف هذا
 }
 ```
 
@@ -130,7 +130,7 @@ var users []User
 db.Where("age > ?", 18).Find(&users)
 
 // الجديد:
-users, _ := gormx.New[User]().Filter("age__gt", 18).All()
+users, _ := gormz.New[User]().Filter("age__gt", 18).All()
 
 // 2. انتقل للاستعلامات المعقدة
 // القديم:
@@ -162,7 +162,7 @@ err := advanced.WithTransaction(ctx, cfg, func(tx *advanced.Tx) error {
 
 ### المرحلة 4: إزالة GORM المباشر
 
-بعد أن تصبح 90% من الكود يستخدم gormx، احذف الاستخدام المباشر.
+بعد أن تصبح 90% من الكود يستخدم gormz، احذف الاستخدام المباشر.
 
 ---
 
@@ -198,30 +198,30 @@ var count int64
 db.Model(&User{}).Where("active = ?", true).Count(&count)
 ```
 
-**gormx**:
+**gormz**:
 ```go
 // Create
 user := &User{Name: "Ali", Email: "ali@test.com"}
-gormx.New[User]().Create(user)
+gormz.New[User]().Create(user)
 
 // Read
-got, _ := gormx.New[User]().Find("email", "ali@test.com")
+got, _ := gormz.New[User]().Find("email", "ali@test.com")
 
 // Update
-gormx.New[User]().Update(user.ID, "age", 30)
+gormz.New[User]().Update(user.ID, "age", 30)
 
 // Delete
-gormx.New[User]().Delete(user.ID)
+gormz.New[User]().Delete(user.ID)
 
 // List
-users, _ := gormx.New[User]().
+users, _ := gormz.New[User]().
     Filter("active", true).
     OrderBy("-created_at").
     Limit(10).
     All()
 
 // Count
-count, _ := gormx.New[User]().Filter("active", true).Count()
+count, _ := gormz.New[User]().Filter("active", true).Count()
 ```
 
 ### مثال 2: Complex Query
@@ -240,14 +240,14 @@ db.Where("(status = ? OR status = ?)", "active", "pending").
     Find(&results)
 ```
 
-**gormx**:
+**gormz**:
 ```go
-q := gormx.QOr(
-    gormx.Eq("status", "active"),
-    gormx.Eq("status", "pending"),
+q := gormz.QOr(
+    gormz.Eq("status", "active"),
+    gormz.Eq("status", "pending"),
 )
 
-results, _ := gormx.New[User]().
+results, _ := gormz.New[User]().
     Q(q).
     Filter("age__gt", 18).
     Filter("name__contains", "Ali").
@@ -288,7 +288,7 @@ err := db.Transaction(func(tx *gorm.DB) error {
 })
 ```
 
-**gormx**:
+**gormz**:
 ```go
 err := advanced.WithTransaction(ctx, advanced.DefaultTxConfig(),
     func(tx *advanced.Tx) error {
@@ -330,7 +330,7 @@ for i := 0; i < len(users); i += 1000 {
 }
 ```
 
-**gormx**:
+**gormz**:
 ```go
 err := advanced.BulkInsert[User](ctx, users, advanced.BulkConfig{
     BatchSize: 1000,
@@ -343,7 +343,7 @@ err := advanced.BulkInsert[User](ctx, users, advanced.BulkConfig{
 
 ### 1. Default Behavior
 
-| الحالة | GORM | gormx |
+| الحالة | GORM | gormz |
 |--------|------|-------|
 | Empty query | كل السجلات | كل السجلات |
 | `Delete` بدون where | ❌ panic/error | ❌ error |
@@ -357,12 +357,12 @@ err := db.Where("id = ?", 999).First(&user).Error
 // err = gorm.ErrRecordNotFound
 ```
 
-**gormx**:
+**gormz**:
 ```go
-user, err := gormx.New[User]().Get(999)
+user, err := gormz.New[User]().Get(999)
 // user = nil, err = gorm.ErrRecordNotFound
-// استخدم gormx.IsNotFound(err)
-if gormx.IsNotFound(err) {
+// استخدم gormz.IsNotFound(err)
+if gormz.IsNotFound(err) {
     // ...
 }
 ```
@@ -370,24 +370,24 @@ if gormx.IsNotFound(err) {
 ### 3. Hooks
 
 **GORM**: `BeforeSave`, `BeforeCreate`, ...
-**gormx**: **نفس الـ hooks** (يعيد تصديرها) ✅
+**gormz**: **نفس الـ hooks** (يعيد تصديرها) ✅
 
 ### 4. Soft Delete
 
 **GORM**: `gorm.DeletedAt` في الموديل
-**gormx**: **نفس الشيء** ✅
+**gormz**: **نفس الشيء** ✅
 
 ### 5. Preload
 
 **GORM**: `db.Preload("Orders").Find(&users)`
-**gormx**: `gormx.New[User]().Preload("Orders").All()` ✅
+**gormz**: `gormz.New[User]().Preload("Orders").All()` ✅
 
 ---
 
 ## 📋 Migration Checklist
 
-- [ ] تثبيت gormx
-- [ ] إضافة `gormx.SetDB(db)` في main
+- [ ] تثبيت gormz
+- [ ] إضافة `gormz.SetDB(db)` في main
 - [ ] تحويل CRUD الأساسي
 - [ ] تحويل الاستعلامات البسيطة
 - [ ] تحويل الاستعلامات المعقدة

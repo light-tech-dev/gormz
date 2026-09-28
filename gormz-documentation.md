@@ -2,7 +2,7 @@
 ║                                                                  ║
 ║                         g o r m x                                ║
 ║                                                                  ║
-║          Django-inspired, Type-safe ORM for Go                   ║
+║          Type-safe, Type-safe ORM for Go                   ║
 ║                     Built on top of GORM                         ║
 ║                                                                  ║
 ║                     Documentation v0.1.0                         ║
@@ -23,7 +23,7 @@
 4.  المفاهيم الأساسية (Core Concepts)
 5.  QuerySet — الاستعلامات
 6.  Q Builder — الشروط المعقدة
-7.  Django-Style Lookups — الفلاتر المتقدمة
+7.  Modern-Style Lookups — الفلاتر المتقدمة
 8.  Pagination — الترقيم
 9.  Model Registry — سجل الموديلات
 10. Multi-DB — دعم قواعد بيانات متعددة
@@ -55,17 +55,17 @@
 1. مقدمة (Introduction)
 ═══════════════════════════════════════════════════════════════════
 
-ما هو gormx؟
+ما هو gormz؟
 ─────────────
 
-gormx هي مكتبة ORM (Object-Relational Mapping) للغة Go، مبنية فوق GORM
-ومستوحاة من Django ORM. تقدّم واجهة برمجية نظيفة وآمنة من حيث الأنواع
+gormz هي مكتبة ORM (Object-Relational Mapping) للغة Go، مبنية فوق GORM
+ومستوحاة من modern ORM. تقدّم واجهة برمجية نظيفة وآمنة من حيث الأنواع
 (type-safe) باستخدام Go Generics.
 
 الفلسفة
 ───────
 
-الفكرة الأساسية وراء gormx هي:
+الفكرة الأساسية وراء gormz هي:
 
     "اجعل الاستعلامات البسيطة بسيطة، والمعقدة ممكنة."
 
@@ -81,7 +81,7 @@ gormx هي مكتبة ORM (Object-Relational Mapping) للغة Go، مبنية �
 
 يمكنك كتابة:
 
-    users, _ := gormx.New[User]().
+    users, _ := gormz.New[User]().
         Filter("age__gt", 18).
         Filter("active", true).
         OrderBy("-created_at").
@@ -93,7 +93,7 @@ gormx هي مكتبة ORM (Object-Relational Mapping) للغة Go، مبنية �
 ────────────────
 
 ✅ Type-safe       — Generic QuerySet[T] مع دعم كامل للـ IDE
-✅ Django lookups  — __gt، __in، __contains، __icontains، ...
+✅ advanced lookups  — __gt، __in، __contains، __icontains، ...
 ✅ Immutable       — كل method يعيد نسخة جديدة (thread-safe)
 ✅ Multi-DB        — دعم قواعد بيانات متعددة عبر Instance
 ✅ Context-first   — دعم كامل لـ context.Context
@@ -132,7 +132,7 @@ gormx هي مكتبة ORM (Object-Relational Mapping) للغة Go، مبنية �
 التثبيت
 ───────
 
-    go get github.com/abdallah-elngar/gormx
+    go get github.com/light-tech-dev/gormz
 
 الإعداد الأساسي
 ───────────────
@@ -142,7 +142,7 @@ gormx هي مكتبة ORM (Object-Relational Mapping) للغة Go، مبنية �
     import (
         "log"
 
-        "github.com/abdallah-elngar/gormx"
+        "github.com/light-tech-dev/gormz"
         "gorm.io/driver/sqlite"
         "gorm.io/gorm"
     )
@@ -162,15 +162,15 @@ gormx هي مكتبة ORM (Object-Relational Mapping) للغة Go، مبنية �
             log.Fatal(err)
         }
 
-        // 2. اربط الاتصال بـ gormx
-        gormx.SetDB(db)
+        // 2. اربط الاتصال بـ gormz
+        gormz.SetDB(db)
 
         // 3. شغّل الترحيلات
-        gormx.MustMigrate[User]()
+        gormz.MustMigrate[User]()
 
         // 4. ابدأ الاستخدام
         user := &User{Name: "Ali", Email: "ali@test.com"}
-        if err := gormx.New[User]().Create(user); err != nil {
+        if err := gormz.New[User]().Create(user); err != nil {
             log.Fatal(err)
         }
 
@@ -183,36 +183,36 @@ gormx هي مكتبة ORM (Object-Relational Mapping) للغة Go، مبنية �
 لضبط إعدادات connection pool:
 
     // للإنتاج
-    cfg := gormx.DefaultConfig()
+    cfg := gormz.DefaultConfig()
     cfg.MaxOpenConns = 50
     cfg.MaxIdleConns = 10
     cfg.ConnMaxLifetime = 2 * time.Hour
 
-    if err := gormx.Configure(cfg); err != nil {
+    if err := gormz.Configure(cfg); err != nil {
         log.Fatal(err)
     }
 
     // للتطوير
-    cfg = gormx.DevelopmentConfig()  // 10 connections، LogInfo
+    cfg = gormz.DevelopmentConfig()  // 10 connections، LogInfo
 
     // للاختبارات
-    cfg = gormx.TestingConfig()  // 5 connections، Silent
+    cfg = gormz.TestingConfig()  // 5 connections، Silent
 
 فحص الاتصال
 ───────────
 
-    if err := gormx.Ping(); err != nil {
+    if err := gormz.Ping(); err != nil {
         log.Fatal("DB is down:", err)
     }
 
-    if !gormx.IsReady() {
+    if !gormz.IsReady() {
         log.Fatal("DB not initialized")
     }
 
 إغلاق الاتصال
 ─────────────
 
-    defer gormx.Close()
+    defer gormz.Close()
 
 
 ═══════════════════════════════════════════════════════════════════
@@ -241,7 +241,7 @@ CRUD — إنشاء
 
     // سجل واحد
     user := &User{Name: "Ali", Email: "ali@test.com", Age: 30}
-    err := gormx.New[User]().Create(user)
+    err := gormz.New[User]().Create(user)
     // user.ID الآن مملوء
 
     // عدة سجلات
@@ -249,37 +249,37 @@ CRUD — إنشاء
         {Name: "Ali", Email: "ali@test.com"},
         {Name: "Sara", Email: "sara@test.com"},
     }
-    err = gormx.New[User]().CreateMany(users)
+    err = gormz.New[User]().CreateMany(users)
 
     // دفعات (لعدد كبير)
-    err = gormx.New[User]().CreateInBatches(users, 1000)
+    err = gormz.New[User]().CreateInBatches(users, 1000)
 
 CRUD — قراءة
 ────────────
 
     // بالـ ID
-    user, err := gormx.New[User]().Get(1)
+    user, err := gormz.New[User]().Get(1)
 
     // أول سجل مطابق
-    user, err := gormx.New[User]().Filter("email", "ali@test.com").First()
+    user, err := gormz.New[User]().Filter("email", "ali@test.com").First()
 
     // كل النتائج
-    users, err := gormx.New[User]().Filter("active", true).All()
+    users, err := gormz.New[User]().Filter("active", true).All()
 
     // عدد
-    count, err := gormx.New[User]().Filter("active", true).Count()
+    count, err := gormz.New[User]().Filter("active", true).Count()
 
     // وجود
-    exists, err := gormx.New[User]().Filter("email", "ali@test.com").Exists()
+    exists, err := gormz.New[User]().Filter("email", "ali@test.com").Exists()
 
 CRUD — تحديث
 ────────────
 
     // حقل واحد
-    err := gormx.New[User]().Update(1, "age", 31)
+    err := gormz.New[User]().Update(1, "age", 31)
 
     // عدة حقول (يتطلب conditions)
-    affected, err := gormx.New[User]().
+    affected, err := gormz.New[User]().
         Filter("age__lt", 18).
         UpdateMany(map[string]any{"active": false})
 
@@ -287,10 +287,10 @@ CRUD — حذف
 ──────────
 
     // حذف واحد
-    err := gormx.New[User]().Delete(1)
+    err := gormz.New[User]().Delete(1)
 
     // حذف جماعي (يتطلب conditions)
-    affected, err := gormx.New[User]().
+    affected, err := gormz.New[User]().
         Filter("active", false).
         DeleteMany()
 
@@ -304,11 +304,11 @@ QuerySet[T]
 
 QuerySet[T] هو builder للاستعلامات. Generic على نوع الموديل T.
 
-    q := gormx.New[User]()  // QuerySet[User]
+    q := gormz.New[User]()  // QuerySet[User]
 
 كل method يعيد QuerySet جديدًا (immutable):
 
-    base := gormx.New[User]().Filter("active", true)
+    base := gormz.New[User]().Filter("active", true)
 
     adults := base.Filter("age__gte", 18)     // نسخة جديدة
     young := base.Filter("age__lt", 18)       // نسخة أخرى
@@ -322,13 +322,13 @@ Panic vs Error
 
 معظم methods تُطلق panic عند الخطأ:
 
-    gormx.New[User]().Filter("bad field", "x")  // panic
+    gormz.New[User]().Filter("bad field", "x")  // panic
 
 هذا مقصود للاستخدام السريع عندما تعرف أن الحقل صالح.
 
 للمدخلات الخارجية (user input)، استخدم النسخة التي تبدأ بـ Try:
 
-    q, err := gormx.New[User]().TryFilter(userInput, "x")
+    q, err := gormz.New[User]().TryFilter(userInput, "x")
     if err != nil {
         // handle validation error
     }
@@ -338,7 +338,7 @@ Immutable by Design
 
 كل method يعيد نسخة جديدة، لذا يمكنك:
 
-    base := gormx.New[User]().Filter("active", true)
+    base := gormz.New[User]().Filter("active", true)
 
     // في goroutine 1
     go func() {
@@ -468,7 +468,7 @@ GroupBy
         Count  int64
     }
 
-    err := gormx.New[Order]().
+    err := gormz.New[Order]().
         SelectRaw("status", "COUNT(*) as count").
         GroupBy("status").
         ScanInto(&results)
@@ -498,20 +498,20 @@ Q Builder يسمح ببناء شروط AND/OR/NOT معقدة.
 QOr — مجموعة OR
 ───────────────
 
-    q := gormx.QOr(
-        gormx.Eq("status", "active"),
-        gormx.Eq("status", "pending"),
+    q := gormz.QOr(
+        gormz.Eq("status", "active"),
+        gormz.Eq("status", "pending"),
     )
 
-    users, _ := gormx.New[User]().Q(q).All()
+    users, _ := gormz.New[User]().Q(q).All()
     // WHERE status = 'active' OR status = 'pending'
 
 QAnd — مجموعة AND
 ─────────────────
 
-    q := gormx.QAnd(
-        gormx.Eq("active", true),
-        gormx.Gt("age", 18),
+    q := gormz.QAnd(
+        gormz.Eq("active", true),
+        gormz.Gt("age", 18),
     )
 
     // WHERE active = true AND age > 18
@@ -520,20 +520,20 @@ Nested — متداخل
 ───────────────
 
     // (status = 'active' OR status = 'pending') AND age > 18
-    q := gormx.Qb().And(
-        gormx.QOr(
-            gormx.Eq("status", "active"),
-            gormx.Eq("status", "pending"),
+    q := gormz.Qb().And(
+        gormz.QOr(
+            gormz.Eq("status", "active"),
+            gormz.Eq("status", "pending"),
         ),
-        gormx.Gt("age", 18),
+        gormz.Gt("age", 18),
     )
 
 NOT
 ───
 
-    q := gormx.QOr(
-        gormx.Not(gormx.Eq("status", "deleted")),
-        gormx.Eq("status", "active"),
+    q := gormz.QOr(
+        gormz.Not(gormz.Eq("status", "deleted")),
+        gormz.Eq("status", "active"),
     )
 
     // WHERE NOT (status = 'deleted') OR status = 'active'
@@ -541,46 +541,46 @@ NOT
 Groups — مجموعات
 ────────────────
 
-    q := gormx.Qb().
-        And(gormx.Eq("x", 1)).
+    q := gormz.Qb().
+        And(gormz.Eq("x", 1)).
         AndGroup(
-            gormx.Eq("a", 2),
-            gormx.Eq("b", 3),
+            gormz.Eq("a", 2),
+            gormz.Eq("b", 3),
         )
     // WHERE x = 1 AND (a = 2 AND b = 3)
 
-    q := gormx.Qb().
-        And(gormx.Eq("x", 1)).
+    q := gormz.Qb().
+        And(gormz.Eq("x", 1)).
         OrGroup(
-            gormx.Eq("a", 2),
-            gormx.Eq("b", 3),
+            gormz.Eq("a", 2),
+            gormz.Eq("b", 3),
         )
     // WHERE x = 1 OR (a = 2 OR b = 3)
 
 المتاحة
 ───────
 
-    gormx.Eq(field, value)         // =
-    gormx.Ne(field, value)         // !=
-    gormx.Gt(field, value)         // >
-    gormx.Gte(field, value)        // >=
-    gormx.Lt(field, value)         // <
-    gormx.Lte(field, value)        // <=
-    gormx.Contains(field, value)   // LIKE '%value%'
-    gormx.StartsWith(field, value) // LIKE 'value%'
-    gormx.EndsWith(field, value)   // LIKE '%value'
-    gormx.In(field, []any{...})    // IN (...)
-    gormx.IsNull(field)            // IS NULL
-    gormx.NotNull(field)           // IS NOT NULL
-    gormx.Raw(sql, args...)        // SQL خام
-    gormx.Not(clause)              // NOT (...)
+    gormz.Eq(field, value)         // =
+    gormz.Ne(field, value)         // !=
+    gormz.Gt(field, value)         // >
+    gormz.Gte(field, value)        // >=
+    gormz.Lt(field, value)         // <
+    gormz.Lte(field, value)        // <=
+    gormz.Contains(field, value)   // LIKE '%value%'
+    gormz.StartsWith(field, value) // LIKE 'value%'
+    gormz.EndsWith(field, value)   // LIKE '%value'
+    gormz.In(field, []any{...})    // IN (...)
+    gormz.IsNull(field)            // IS NULL
+    gormz.NotNull(field)           // IS NOT NULL
+    gormz.Raw(sql, args...)        // SQL خام
+    gormz.Not(clause)              // NOT (...)
 
 
 ═══════════════════════════════════════════════════════════════════
-7. Django-Style Lookups — الفلاتر المتقدمة
+7. Modern-Style Lookups — الفلاتر المتقدمة
 ═══════════════════════════════════════════════════════════════════
 
-gormx يدعم صيغة Django الشهيرة: field__lookup
+gormz يدعم صيغة modern ORM الشهيرة: field__lookup
 
     q.Filter("age__gt", 18)
 
@@ -647,7 +647,7 @@ gormx يدعم صيغة Django الشهيرة: field__lookup
 Paginate — الترقيم الكامل
 ─────────────────────────
 
-    page, err := gormx.New[User]().
+    page, err := gormz.New[User]().
         Filter("active", true).
         OrderBy("name").
         Paginate(1, 20)  // page 1، 20 items
@@ -673,21 +673,21 @@ helpers
 MapPage — تحويل النتائج
 ───────────────────────
 
-    names := gormx.MapPage(page, func(u User) string {
+    names := gormz.MapPage(page, func(u User) string {
         return u.Name
     })
 
 FilterPage — تصفية النتائج
 ──────────────────────────
 
-    actives := gormx.FilterPage(page, func(u User) bool {
+    actives := gormz.FilterPage(page, func(u User) bool {
         return u.Active
     })
 
 Page type — helper
 ──────────────────
 
-    p := gormx.NewPage(2, 20)
+    p := gormz.NewPage(2, 20)
     // p.Number = 2
     // p.PerPage = 20
     // p.Offset() = 20
@@ -714,50 +714,50 @@ Model Registry يحل مشكلة import cycles.
 الاستخدام:
 
     // في package a
-    var Users = gormx.Register[User]("user")
+    var Users = gormz.Register[User]("user")
 
     // في package b
-    var Orders = gormx.Register[Order]("order")
+    var Orders = gormz.Register[Order]("order")
 
     // في أي مكان
     Users.Filter("active", true).All()
 
     // أو من registry
-    q := gormx.MustLookup[User]("user")
+    q := gormz.MustLookup[User]("user")
     users, _ := q.Filter("active", true).All()
 
 الواجهات:
 
-    gormx.Register[T](name)           // يpanic عند التكرار
-    gormx.TryRegister[T](name)        // يعيد error
-    gormx.Lookup[T](name)             // (q، ok)
-    gormx.MustLookup[T](name)         // panic إذا لم يوجد
-    gormx.Has(name)                   // bool
-    gormx.Unregister(name)            // حذف
-    gormx.RegisteredNames()           // []string
-    gormx.RegisteredCount()           // int
-    gormx.ClearRegistry()             // مسح الكل
+    gormz.Register[T](name)           // يpanic عند التكرار
+    gormz.TryRegister[T](name)        // يعيد error
+    gormz.Lookup[T](name)             // (q، ok)
+    gormz.MustLookup[T](name)         // panic إذا لم يوجد
+    gormz.Has(name)                   // bool
+    gormz.Unregister(name)            // حذف
+    gormz.RegisteredNames()           // []string
+    gormz.RegisteredCount()           // int
+    gormz.ClearRegistry()             // مسح الكل
 
 Batch:
 
     entries := map[string]any{
-        "user":  gormx.New[User](),
-        "order": gormx.New[Order](),
+        "user":  gormz.New[User](),
+        "order": gormz.New[Order](),
     }
-    err := gormx.RegisterBatch(entries)
+    err := gormz.RegisterBatch(entries)
 
-    count := gormx.UnregisterBatch("user", "order")
+    count := gormz.UnregisterBatch("user", "order")
 
 Type-based:
 
-    gormx.HasType[User]()             // bool
-    gormx.LookupByType[User]()        // (q، ok)
-    gormx.MustLookupByType[User]()    // panic
-    gormx.NamesByType[User]()         // []string
+    gormz.HasType[User]()             // bool
+    gormz.LookupByType[User]()        // (q، ok)
+    gormz.MustLookupByType[User]()    // panic
+    gormz.NamesByType[User]()         // []string
 
 Snapshot (للاختبارات):
 
-    snap := gormx.TakeSnapshot()
+    snap := gormz.TakeSnapshot()
     // ... تعديلات ...
     snap.Restore()
     snap.Merge()
@@ -771,11 +771,11 @@ Instance يمثل اتصالًا مستقلًا:
 
     // اتصال أساسي (كتابة)
     writeDB, _ := gorm.Open(...)
-    writeApp := gormx.NewInstance(writeDB)
+    writeApp := gormz.NewInstance(writeDB)
 
     // اتصال ثانوي (قراءة)
     readDB, _ := gorm.Open(...)
-    readApp := gormx.NewInstance(readDB)
+    readApp := gormz.NewInstance(readDB)
 
     // استخدم كل واحد
     users, _ := writeApp.Query[User]().All()
@@ -783,12 +783,12 @@ Instance يمثل اتصالًا مستقلًا:
 
 Global Instance:
 
-    gormx.SetDB(db)
-    app := gormx.GlobalInstance()
+    gormz.SetDB(db)
+    app := gormz.GlobalInstance()
     users, _ := app.Query[User]().All()
 
     // أو
-    users, _ := gormx.NewWith[User](app).All()
+    users, _ := gormz.NewWith[User](app).All()
 
 Transaction على Instance:
 
@@ -806,36 +806,36 @@ Transaction على Instance:
 
 ربط DB بـ context:
 
-    ctx := gormx.WithDB(context.Background(), app)
-    users, _ := gormx.FromContext[User](ctx).All()
+    ctx := gormz.WithDB(context.Background(), app)
+    users, _ := gormz.FromContext[User](ctx).All()
 
 استخدام QuerySet مع context:
 
-    q := gormx.New[User]().WithContext(ctx)
+    q := gormz.New[User]().WithContext(ctx)
     users, _ := q.Filter("active", true).All()
 
 استخراج DB:
 
-    app, ok := gormx.DBFromContext(ctx)
+    app, ok := gormz.DBFromContext(ctx)
     if ok {
         // استخدم app.DB()
     }
 
 WithGormDB:
 
-    ctx := gormx.WithGormDB(ctx, db)
+    ctx := gormz.WithGormDB(ctx, db)
     // يعمل مثل WithDB لكن يقبل *gorm.DB مباشرة
 
 MustFromContext:
 
-    q := gormx.MustFromContext[User](ctx)  // panic إذا لم يوجد
+    q := gormz.MustFromContext[User](ctx)  // panic إذا لم يوجد
 
 
 ═══════════════════════════════════════════════════════════════════
 12. Errors — معالجة الأخطاء
 ═══════════════════════════════════════════════════════════════════
 
-gormx يستخدم typed errors:
+gormz يستخدم typed errors:
 
     var (
         ErrNotFound           = ...
@@ -856,43 +856,43 @@ Typed Errors:
 
 فحص الأخطاء:
 
-    if gormx.IsNotFound(err) {
+    if gormz.IsNotFound(err) {
         // السجل غير موجود
     }
 
-    if gormx.IsValidation(err) {
+    if gormz.IsValidation(err) {
         // خطأ في الحقل
     }
 
-    if gormx.IsDangerous(err) {
+    if gormz.IsDangerous(err) {
         // عملية خطرة
     }
 
 استخراج التفاصيل:
 
-    if ne, ok := gormx.AsNotFound(err); ok {
+    if ne, ok := gormz.AsNotFound(err); ok {
         fmt.Println(ne.Model)  // "User"
         fmt.Println(ne.ID)     // 42
     }
 
-    if ve, ok := gormx.AsValidation(err); ok {
+    if ve, ok := gormz.AsValidation(err); ok {
         fmt.Println(ve.Field)   // "bad_field"
         fmt.Println(ve.Reason)  // "invalid characters"
     }
 
 إنشاء أخطاء:
 
-    err := gormx.NewNotFoundError("User", 42)
-    err := gormx.NewValidationError("field", "reason")
-    err := gormx.NewDangerousError("DeleteMany", "requires conditions")
+    err := gormz.NewNotFoundError("User", 42)
+    err := gormz.NewValidationError("field", "reason")
+    err := gormz.NewDangerousError("DeleteMany", "requires conditions")
 
 استخدام errors.Is/As:
 
     // يعمل مع errors.Is
-    if errors.Is(err, gormx.ErrNotFound) { ... }
+    if errors.Is(err, gormz.ErrNotFound) { ... }
 
     // يعمل مع errors.As
-    var ne *gormx.NotFoundError
+    var ne *gormz.NotFoundError
     if errors.As(err, &ne) { ... }
 
 
@@ -902,7 +902,7 @@ Typed Errors:
 
 كل الميزات أدناه موجودة في الحزمة الفرعية:
 
-    import "github.com/abdallah-elngar/gormx/advanced"
+    import "github.com/light-tech-dev/gormz/advanced"
 
 
 ───────────────────────────────────────────────────────────────────
@@ -911,17 +911,17 @@ Typed Errors:
 
     // بناء subquery من QuerySet
     subq := advanced.SubFrom[Order](
-        gormx.New[Order]().Select("user_id").Filter("status", "paid"),
+        gormz.New[Order]().Select("user_id").Filter("status", "paid"),
         "user_id",
     )
 
     // استخدامه
-    users, _ := gormx.New[User]().
+    users, _ := gormz.New[User]().
         Where("id IN (" + subq.SQL + ")", subq.Args...).
         All()
 
     // أو باستخدام helper
-    users, _ := gormx.New[User]().Q(
+    users, _ := gormz.New[User]().Q(
         advanced.In("id", subq),
     ).All()
 
@@ -943,7 +943,7 @@ Correlated Subquery:
         "SELECT AVG(age) FROM users WHERE department_id = users.department_id",
     )
 
-    users, _ := gormx.New[User]().
+    users, _ := gormz.New[User]().
         Q(advanced.GtCorr("age", corr)).
         All()
 
@@ -954,24 +954,24 @@ Correlated Subquery:
 
     // CTE بسيط
     activeUsers := advanced.NewCTE("active_users",
-        gormx.New[User]().Filter("active", true))
+        gormz.New[User]().Filter("active", true))
 
     results, _ := advanced.With[Order](activeUsers).
-        Query(gormx.New[Order]().
+        Query(gormz.New[Order]().
             Where("user_id IN (SELECT id FROM active_users)")).
         All()
 
 Recursive CTE (شجرة):
 
     tree := advanced.NewRecursiveCTE[Category]("tree",
-        gormx.New[Category]().Filter("id", rootID))
+        gormz.New[Category]().Filter("id", rootID))
 
     tree.UnionRaw(
         "SELECT c.* FROM categories c JOIN tree t ON c.parent_id = t.id",
     )
 
     results, _ := advanced.With[Category](tree).
-        Query(gormx.New[Category]()).
+        Query(gormz.New[Category]()).
         All()
 
 
@@ -980,7 +980,7 @@ Recursive CTE (شجرة):
 ───────────────────────────────────────────────────────────────────
 
     // ROW_NUMBER
-    results, _ := gormx.New[User]().
+    results, _ := gormz.New[User]().
         Select("id", "name").
         Window(advanced.RowNumber("rn", "department_id")).
         All()
@@ -1026,8 +1026,8 @@ Recursive CTE (شجرة):
 ───────────────────────────────────────────────────────────────────
 
     // UNION (يحذف المكرر)
-    q1 := gormx.New[User]().Filter("status", "active")
-    q2 := gormx.New[User]().Filter("status", "pending")
+    q1 := gormz.New[User]().Filter("status", "active")
+    q2 := gormz.New[User]().Filter("status", "pending")
 
     users, _ := advanced.Union(q1, q2).All()
 
@@ -1096,7 +1096,7 @@ Convenience:
 13.6 Joins
 ───────────────────────────────────────────────────────────────────
 
-    users, _ := gormx.New[User]().
+    users, _ := gormz.New[User]().
         InnerJoin("orders", "orders.user_id = users.id").
         Filter("orders.status", "paid").
         Select("users.id", "users.name", "COUNT(orders.id) as order_count").
@@ -1155,7 +1155,7 @@ Optimistic Locking:
 
 Simple Transaction:
 
-    err := gormx.Transaction(ctx, func(tx *gorm.DB) error {
+    err := gormz.Transaction(ctx, func(tx *gorm.DB) error {
         if err := tx.Create(&user).Error; err != nil {
             return err
         }
@@ -1268,14 +1268,14 @@ SavepointStack:
     // Retry بسيط
     err := advanced.Retry(ctx, advanced.DefaultRetryConfig(),
         func() error {
-            return gormx.New[User]().Create(&user)
+            return gormz.New[User]().Create(&user)
         })
 
     // Retry مع backoff
     backoff := advanced.ExponentialBackoff(100*time.Millisecond, 10*time.Second)
 
     err := advanced.RetryWithBackoff(ctx, 5, backoff, func() error {
-        return gormx.New[User]().Create(&user)
+        return gormz.New[User]().Create(&user)
     })
 
     // Retry DB operation
@@ -1344,7 +1344,7 @@ Custom Retry Config:
     result := advanced.ProcessBatch(ctx, users,
         advanced.DefaultBatchConfig(),
         func(batch []User) error {
-            return gormx.New[User]().CreateMany(batch)
+            return gormz.New[User]().CreateMany(batch)
         })
 
     fmt.Println(result.Total)    // 1000
@@ -1373,7 +1373,7 @@ Custom Retry Config:
 14. Security — الأمان
 ═══════════════════════════════════════════════════════════════════
 
-gormx مصمّمة مع الأمان في الاعتبار.
+gormz مصمّمة مع الأمان في الاعتبار.
 
 حماية من SQL Injection
 ──────────────────────
@@ -1388,7 +1388,7 @@ gormx مصمّمة مع الأمان في الاعتبار.
 
 للمدخلات الخارجية:
 
-    q, err := gormx.New[User]().TryFilter(userInput, value)
+    q, err := gormz.New[User]().TryFilter(userInput, value)
     if err != nil {
         // handle validation error
     }
@@ -1397,19 +1397,19 @@ gormx مصمّمة مع الأمان في الاعتبار.
 ──────────────────────────
 
     // ❌ خطأ — لا conditions
-    _, err := gormx.New[User]().DeleteMany()
+    _, err := gormz.New[User]().DeleteMany()
     // err: DangerousOperationError
 
     // ✅ يعمل — مع conditions
-    _, err := gormx.New[User]().Filter("active", false).DeleteMany()
+    _, err := gormz.New[User]().Filter("active", false).DeleteMany()
 
 نفس الشيء لـ UpdateMany:
 
     // ❌ خطأ
-    gormx.New[User]().UpdateMany(map[string]any{"active": false})
+    gormz.New[User]().UpdateMany(map[string]any{"active": false})
 
     // ✅ يعمل
-    gormx.New[User]().
+    gormz.New[User]().
         Filter("age__lt", 18).
         UpdateMany(map[string]any{"active": false})
 
@@ -1435,44 +1435,44 @@ SQL الخام
 ─────────────────────────────────
 
     // للمستخدم
-    q, err := gormx.New[User]().TryFilter(userInput, value)
+    q, err := gormz.New[User]().TryFilter(userInput, value)
 
     // للكود الداخلي (تثق بالحقل)
-    q := gormx.New[User]().Filter("name", "Ali")
+    q := gormz.New[User]().Filter("name", "Ali")
 
 2. استخدم Context دائمًا
 ─────────────────────────
 
     // ✅
-    gormx.New[User]().WithContext(ctx).Filter("active", true).All()
+    gormz.New[User]().WithContext(ctx).Filter("active", true).All()
 
     // ❌ (يفتقد cancellation)
-    gormx.New[User]().Filter("active", true).All()
+    gormz.New[User]().Filter("active", true).All()
 
 3. Prefer Batch Operations
 ──────────────────────────
 
     // ❌ بطيء
     for _, u := range users {
-        gormx.New[User]().Create(&u)
+        gormz.New[User]().Create(&u)
     }
 
     // ✅ سريع
-    gormx.New[User]().CreateInBatches(users, 1000)
+    gormz.New[User]().CreateInBatches(users, 1000)
 
 4. استخدم Registry لتجنب Cycles
 ───────────────────────────────
 
-    var Users = gormx.Register[User]("user")
+    var Users = gormz.Register[User]("user")
 
 5. Explicit is Better
 ─────────────────────
 
     // ❌ غامض
-    gormx.New[User]().Filter("active", true).All()
+    gormz.New[User]().Filter("active", true).All()
 
     // ✅ واضح
-    activeUsers, err := gormx.New[User]().
+    activeUsers, err := gormz.New[User]().
         Filter("active", true).
         OrderBy("name").
         All()
@@ -1494,9 +1494,9 @@ SQL الخام
 7. Handle Errors Properly
 ─────────────────────────
 
-    user, err := gormx.New[User]().Get(1)
+    user, err := gormz.New[User]().Get(1)
     if err != nil {
-        if gormx.IsNotFound(err) {
+        if gormz.IsNotFound(err) {
             return ErrUserNotFound
         }
         return err
@@ -1527,15 +1527,15 @@ Setup اختبار:
         require.NoError(t, err)
         require.NoError(t, db.AutoMigrate(&User{}))
 
-        gormx.SetDB(db)
-        gormx.ClearRegistry()
+        gormz.SetDB(db)
+        gormz.ClearRegistry()
 
         t.Cleanup(func() {
             if sqlDB, err := db.DB(); err == nil && sqlDB != nil {
                 _ = sqlDB.Close()
             }
-            gormx.ResetDB()
-            gormx.ClearRegistry()
+            gormz.ResetDB()
+            gormz.ClearRegistry()
         })
     }
 
@@ -1546,22 +1546,22 @@ Test CRUD:
 
         // Create
         user := &User{Name: "Ali", Email: "ali@test.com"}
-        require.NoError(t, gormx.New[User]().Create(user))
+        require.NoError(t, gormz.New[User]().Create(user))
         assert.NotZero(t, user.ID)
 
         // Read
-        got, err := gormx.New[User]().Get(user.ID)
+        got, err := gormz.New[User]().Get(user.ID)
         require.NoError(t, err)
         assert.Equal(t, "Ali", got.Name)
 
         // Update
-        require.NoError(t, gormx.New[User]().Update(user.ID, "age", 30))
+        require.NoError(t, gormz.New[User]().Update(user.ID, "age", 30))
 
         // Delete
-        require.NoError(t, gormx.New[User]().Delete(user.ID))
+        require.NoError(t, gormz.New[User]().Delete(user.ID))
 
-        _, err = gormx.New[User]().Get(user.ID)
-        assert.True(t, gormx.IsNotFound(err))
+        _, err = gormz.New[User]().Get(user.ID)
+        assert.True(t, gormz.IsNotFound(err))
     }
 
 Test Filter:
@@ -1574,9 +1574,9 @@ Test Filter:
             {Name: "Sara", Age: 25, Active: true},
             {Name: "Omar", Age: 17, Active: false},
         }
-        require.NoError(t, gormx.New[User]().CreateMany(users))
+        require.NoError(t, gormz.New[User]().CreateMany(users))
 
-        result, err := gormx.New[User]().
+        result, err := gormz.New[User]().
             Filter("active", true).
             Filter("age__gte", 18).
             All()
@@ -1596,7 +1596,7 @@ Benchmarks:
                 Name:  "User",
                 Email: fmt.Sprintf("user%d@test.com", i),
             }
-            if err := gormx.New[User]().Create(user); err != nil {
+            if err := gormz.New[User]().Create(user); err != nil {
                 b.Fatal(err)
             }
         }
@@ -1609,17 +1609,17 @@ Benchmarks:
 
 جدول التحويل:
 
-    GORM                                  gormx
+    GORM                                  gormz
     ─────────────────────────────────────────────────────────────
-    db.Where("age > ?", 18).Find(&u)      gormx.New[U]().Filter("age__gt", 18).All()
-    db.First(&user, 1)                    gormx.New[U]().Get(1)
-    db.First(&user, "email = ?", "x")     gormx.New[U]().Find("email", "x")
-    db.Create(&user)                      gormx.New[U]().Create(&user)
-    db.Save(&user)                        gormx.New[U]().Save(&user)
-    db.Delete(&user, 1)                   gormx.New[U]().Delete(1)
-    db.Model(&u).Update("x", "y")         gormx.New[U]().Update(id, "x", "y")
-    db.Model(&u).Updates(m)               gormx.New[U]().Filter(...).UpdateMany(m)
-    db.Model(&u).Count(&c)                gormx.New[U]().Count()
+    db.Where("age > ?", 18).Find(&u)      gormz.New[U]().Filter("age__gt", 18).All()
+    db.First(&user, 1)                    gormz.New[U]().Get(1)
+    db.First(&user, "email = ?", "x")     gormz.New[U]().Find("email", "x")
+    db.Create(&user)                      gormz.New[U]().Create(&user)
+    db.Save(&user)                        gormz.New[U]().Save(&user)
+    db.Delete(&user, 1)                   gormz.New[U]().Delete(1)
+    db.Model(&u).Update("x", "y")         gormz.New[U]().Update(id, "x", "y")
+    db.Model(&u).Updates(m)               gormz.New[U]().Filter(...).UpdateMany(m)
+    db.Model(&u).Count(&c)                gormz.New[U]().Count()
 
 مثال كامل قبل/بعد:
 
@@ -1638,8 +1638,8 @@ Benchmarks:
         Preload("Roles").
         Find(&users).Error
 
-    // ─── gormx ───
-    q := gormx.New[User]().Filter("active", true)
+    // ─── gormz ───
+    q := gormz.New[User]().Filter("active", true)
     if search != "" {
         q = q.Filter("name__contains", search)
     }
@@ -1674,8 +1674,8 @@ Benchmarks:
         "log"
         "time"
 
-        "github.com/abdallah-elngar/gormx"
-        "github.com/abdallah-elngar/gormx/advanced"
+        "github.com/light-tech-dev/gormz"
+        "github.com/light-tech-dev/gormz/advanced"
         "gorm.io/driver/sqlite"
         "gorm.io/gorm"
     )
@@ -1703,7 +1703,7 @@ Benchmarks:
             IsActive: true,
         }
 
-        if err := gormx.New[User]().
+        if err := gormz.New[User]().
             WithContext(s.ctx).
             Create(user); err != nil {
             return nil, err
@@ -1713,13 +1713,13 @@ Benchmarks:
     }
 
     func (s *UserService) GetByID(id uint) (*User, error) {
-        return gormx.New[User]().
+        return gormz.New[User]().
             WithContext(s.ctx).
             Get(id)
     }
 
-    func (s *UserService) List(page, perPage int) (*gormx.PaginatedResult[User], error) {
-        return gormx.New[User]().
+    func (s *UserService) List(page, perPage int) (*gormz.PaginatedResult[User], error) {
+        return gormz.New[User]().
             WithContext(s.ctx).
             Filter("is_active", true).
             OrderBy("-created_at").
@@ -1727,20 +1727,20 @@ Benchmarks:
     }
 
     func (s *UserService) Search(query string) ([]User, error) {
-        return gormx.New[User]().
+        return gormz.New[User]().
             WithContext(s.ctx).
             Filter("is_active", true).
-            Q(gormx.QOr(
-                gormx.Contains("username", query),
-                gormx.Contains("email", query),
-                gormx.Contains("full_name", query),
+            Q(gormz.QOr(
+                gormz.Contains("username", query),
+                gormz.Contains("email", query),
+                gormz.Contains("full_name", query),
             )).
             Limit(20).
             All()
     }
 
     func (s *UserService) Deactivate(id uint) error {
-        _, err := gormx.New[User]().
+        _, err := gormz.New[User]().
             WithContext(s.ctx).
             Filter("id", id).
             UpdateMany(map[string]any{"is_active": false})
@@ -1749,7 +1749,7 @@ Benchmarks:
 
     func (s *UserService) RecordLogin(id uint) error {
         now := time.Now()
-        return gormx.New[User]().
+        return gormz.New[User]().
             WithContext(s.ctx).
             Update(id, "last_login", &now)
     }
@@ -1854,14 +1854,14 @@ Benchmarks:
 
     func GetCategoryTree(ctx context.Context, rootID uint) ([]Category, error) {
         tree := advanced.NewRecursiveCTE[Category]("tree",
-            gormx.New[Category]().Filter("id", rootID))
+            gormz.New[Category]().Filter("id", rootID))
 
         tree.UnionRaw(
             "SELECT c.* FROM categories c JOIN tree t ON c.parent_id = t.id",
         )
 
         results, err := advanced.With[Category](tree).
-            Query(gormx.New[Category]()).
+            Query(gormz.New[Category]()).
             All()
 
         return results, err
@@ -1908,12 +1908,12 @@ Benchmarks:
 19. FAQ — الأسئلة الشائعة
 ═══════════════════════════════════════════════════════════════════
 
-Q: هل gormx بديل لـ GORM؟
-A: لا. gormx مكتبة مبنية فوق GORM. تستخدم GORM تحت الغطاء، لكن
+Q: هل gormz بديل لـ GORM؟
+A: لا. gormz مكتبة مبنية فوق GORM. تستخدم GORM تحت الغطاء، لكن
    تقدّم API أنظف. يمكنك استخدام الاثنين معًا.
 
 Q: هل يمكنني استخدام GORM hooks؟
-A: نعم! gormx تستخدم GORM تحت الغطاء، لذا كل hooks GORM تعمل:
+A: نعم! gormz تستخدم GORM تحت الغطاء، لذا كل hooks GORM تعمل:
 
    func (u *User) BeforeCreate(tx *gorm.DB) error {
        u.Name = strings.TrimSpace(u.Name)
@@ -1923,28 +1923,28 @@ A: نعم! gormx تستخدم GORM تحت الغطاء، لذا كل hooks GORM 
 Q: كيف أتعامل مع الأخطاء؟
 A: استخدم typed errors:
 
-   if gormx.IsNotFound(err) { ... }
-   if ne, ok := gormx.AsNotFound(err); ok { ... }
+   if gormz.IsNotFound(err) { ... }
+   if ne, ok := gormz.AsNotFound(err); ok { ... }
 
 Q: هل QuerySet آمن للاستخدام المتزامن؟
 A: نعم. QuerySet immutable — كل method يعيد نسخة جديدة.
 
 Q: كيف أستخدم مع PostgreSQL؟
-A: gormx يدعم أي driver يدعمه GORM:
+A: gormz يدعم أي driver يدعمه GORM:
 
    import "gorm.io/driver/postgres"
    db, _ := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-   gormx.SetDB(db)
+   gormz.SetDB(db)
 
 Q: ما الفرق بين Filter و Where؟
 A:
-   - Filter: validation + Django lookups (آمن)
+   - Filter: validation + advanced lookups (آمن)
    - Where: SQL خام (مسؤوليتك)
 
 Q: كيف أعمل pagination؟
 A:
 
-   page, _ := gormx.New[User]().Paginate(1, 20)
+   page, _ := gormz.New[User]().Paginate(1, 20)
    // page.Items، page.Total، page.Page، ...
 
 Q: كيف أستخدم transactions؟
@@ -1958,7 +1958,7 @@ A:
 Q: هل هناك دعم لـ multi-tenancy؟
 A: يمكن استخدام Instance منفصل لكل tenant:
 
-   tenantDB := gormx.NewInstance(getTenantDB(tenantID))
+   tenantDB := gormz.NewInstance(getTenantDB(tenantID))
    users, _ := tenantDB.Query[User]().All()
 
 Q: كيف أنتقل من GORM؟
@@ -1982,31 +1982,31 @@ A: MIT — استخدمها بحرية في المشاريع التجارية.
 إعداد (Setup)
 ─────────────
 
-    gormx.SetDB(db *gorm.DB)              — ربط الاتصال
-    gormx.DB() *gorm.DB                    — الاتصال الحالي
-    gormx.IsReady() bool                   — فحص الجاهزية
-    gormx.ResetDB()                        — إعادة تعيين
-    gormx.Configure(cfg Config) error      — إعدادات pool
-    gormx.Ping() error                     — فحص الاتصال
-    gormx.Close() error                    — إغلاق
+    gormz.SetDB(db *gorm.DB)              — ربط الاتصال
+    gormz.DB() *gorm.DB                    — الاتصال الحالي
+    gormz.IsReady() bool                   — فحص الجاهزية
+    gormz.ResetDB()                        — إعادة تعيين
+    gormz.Configure(cfg Config) error      — إعدادات pool
+    gormz.Ping() error                     — فحص الاتصال
+    gormz.Close() error                    — إغلاق
 
 ترحيل (Migrate)
 ───────────────
 
-    gormx.Migrate[T]() error               — ترحيل موديل
-    gormx.MustMigrate[T]()                 — ترحيل + panic
-    gormx.MigrateAll(models...) error      — ترحيل متعدد
-    gormx.MustMigrateAll(models...)        — panic
-    gormx.DropTable[T]() error             — حذف جدول
-    gormx.HasTable[T]() bool               — فحص وجود جدول
+    gormz.Migrate[T]() error               — ترحيل موديل
+    gormz.MustMigrate[T]()                 — ترحيل + panic
+    gormz.MigrateAll(models...) error      — ترحيل متعدد
+    gormz.MustMigrateAll(models...)        — panic
+    gormz.DropTable[T]() error             — حذف جدول
+    gormz.HasTable[T]() bool               — فحص وجود جدول
 
 QuerySet — الإنشاء
 ──────────────────
 
-    gormx.New[T]() *QuerySet[T]            — QuerySet جديد
-    gormx.NewWith[T](i *Instance)          — من Instance
-    gormx.FromContext[T](ctx)              — من context
-    gormx.MustFromContext[T](ctx)          — + panic
+    gormz.New[T]() *QuerySet[T]            — QuerySet جديد
+    gormz.NewWith[T](i *Instance)          — من Instance
+    gormz.FromContext[T](ctx)              — من context
+    gormz.MustFromContext[T](ctx)          — + panic
 
 QuerySet — الفلاتر
 ──────────────────
@@ -2126,62 +2126,62 @@ QuerySet — Debug
 Q Builder
 ─────────
 
-    gormx.Qb() *Q
-    gormx.QOr(children...) *Q
-    gormx.QAnd(children...) *Q
+    gormz.Qb() *Q
+    gormz.QOr(children...) *Q
+    gormz.QAnd(children...) *Q
 
-    gormx.Eq(field, value) whereClause
-    gormx.Ne(field, value)
-    gormx.Gt(field, value)
-    gormx.Gte(field, value)
-    gormx.Lt(field, value)
-    gormx.Lte(field, value)
-    gormx.Contains(field, value)
-    gormx.StartsWith(field, value)
-    gormx.EndsWith(field, value)
-    gormx.In(field, values)
-    gormx.IsNull(field)
-    gormx.NotNull(field)
-    gormx.Raw(sql, args...)
-    gormx.Not(clause)
+    gormz.Eq(field, value) whereClause
+    gormz.Ne(field, value)
+    gormz.Gt(field, value)
+    gormz.Gte(field, value)
+    gormz.Lt(field, value)
+    gormz.Lte(field, value)
+    gormz.Contains(field, value)
+    gormz.StartsWith(field, value)
+    gormz.EndsWith(field, value)
+    gormz.In(field, values)
+    gormz.IsNull(field)
+    gormz.NotNull(field)
+    gormz.Raw(sql, args...)
+    gormz.Not(clause)
 
 Registry
 ────────
 
-    gormx.Register[T](name) *QuerySet[T]
-    gormx.TryRegister[T](name) (*QuerySet[T], error)
-    gormx.Lookup[T](name) (*QuerySet[T], bool)
-    gormx.MustLookup[T](name) *QuerySet[T]
-    gormx.Has(name) bool
-    gormx.Unregister(name)
-    gormx.RegisteredNames() []string
-    gormx.RegisteredCount() int
-    gormx.ClearRegistry()
-    gormx.RegisterBatch(entries) error
-    gormx.UnregisterBatch(names...) int
-    gormx.HasType[T]() bool
-    gormx.LookupByType[T]() (*QuerySet[T], bool)
-    gormx.MustLookupByType[T]() *QuerySet[T]
-    gormx.NamesByType[T]() []string
-    gormx.TakeSnapshot() Snapshot
-    gormx.Summary() RegistrySummary
+    gormz.Register[T](name) *QuerySet[T]
+    gormz.TryRegister[T](name) (*QuerySet[T], error)
+    gormz.Lookup[T](name) (*QuerySet[T], bool)
+    gormz.MustLookup[T](name) *QuerySet[T]
+    gormz.Has(name) bool
+    gormz.Unregister(name)
+    gormz.RegisteredNames() []string
+    gormz.RegisteredCount() int
+    gormz.ClearRegistry()
+    gormz.RegisterBatch(entries) error
+    gormz.UnregisterBatch(names...) int
+    gormz.HasType[T]() bool
+    gormz.LookupByType[T]() (*QuerySet[T], bool)
+    gormz.MustLookupByType[T]() *QuerySet[T]
+    gormz.NamesByType[T]() []string
+    gormz.TakeSnapshot() Snapshot
+    gormz.Summary() RegistrySummary
 
 Errors
 ──────
 
-    gormx.IsNotFound(err) bool
-    gormx.IsValidation(err) bool
-    gormx.IsDangerous(err) bool
-    gormx.IsAlreadyRegistered(err) bool
-    gormx.IsNotFoundInRegistry(err) bool
-    gormx.AsNotFound(err) (*NotFoundError, bool)
-    gormx.AsValidation(err) (*ValidationError, bool)
-    gormx.AsDangerous(err) (*DangerousOperationError, bool)
+    gormz.IsNotFound(err) bool
+    gormz.IsValidation(err) bool
+    gormz.IsDangerous(err) bool
+    gormz.IsAlreadyRegistered(err) bool
+    gormz.IsNotFoundInRegistry(err) bool
+    gormz.AsNotFound(err) (*NotFoundError, bool)
+    gormz.AsValidation(err) (*ValidationError, bool)
+    gormz.AsDangerous(err) (*DangerousOperationError, bool)
 
 Instance
 ────────
 
-    gormx.NewInstance(db) *Instance
+    gormz.NewInstance(db) *Instance
     .DB() *gorm.DB
     .Ping() error
     .Close() error
@@ -2191,7 +2191,7 @@ Instance
     .QueryWithContext[T](ctx) *QuerySet[T]
     .Migrate(models...) error
 
-    gormx.GlobalInstance() *Instance
+    gormz.GlobalInstance() *Instance
 
 
 advanced/ Package
@@ -2306,14 +2306,14 @@ Batch:
                            الخاتمة
 ═══════════════════════════════════════════════════════════════════
 
-شكرًا لاستخدامك gormx!
+شكرًا لاستخدامك gormz!
 
 نأمل أن تجعل هذه المكتبة تطويرك أسرع، وكودك أنظف، وحياتك أسهل.
 
 للأسئلة، الاقتراحات، أو الإبلاغ عن أخطاء:
-    GitHub: https://github.com/abdallah-elngar/gormx
-    Issues: https://github.com/abdallah-elngar/gormx/issues
-    Discussions: https://github.com/abdallah-elngar/gormx/discussions
+    GitHub: https://github.com/light-tech-dev/gormz
+    Issues: https://github.com/light-tech-dev/gormz/issues
+    Discussions: https://github.com/light-tech-dev/gormz/discussions
 
 ═══════════════════════════════════════════════════════════════════
 
@@ -2325,7 +2325,7 @@ Batch:
 
                           نهاية الدوكيمنتشن
 
-                          gormx v0.1.0
+                          gormz v0.1.0
                           MIT License
                           © 2025 Sanad Team
 

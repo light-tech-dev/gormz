@@ -19,25 +19,25 @@
 ### `WithDB(ctx, instance)`
 
 ```go
-ctx := gormx.WithDB(context.Background(), app)
+ctx := gormz.WithDB(context.Background(), app)
 ```
 
 ### `WithGormDB(ctx, db)`
 
 ```go
-ctx := gormx.WithGormDB(context.Background(), db)
+ctx := gormz.WithGormDB(context.Background(), db)
 ```
 
 ### `DBFromContext(ctx)`
 
 ```go
-inst, ok := gormx.DBFromContext(ctx)
+inst, ok := gormz.DBFromContext(ctx)
 ```
 
 ### `FromContext[T](ctx)`
 
 ```go
-q := gormx.FromContext[User](ctx)
+q := gormz.FromContext[User](ctx)
 ```
 
 ---
@@ -47,16 +47,16 @@ q := gormx.FromContext[User](ctx)
 ### مثال 1: HTTP Request
 
 ```go
-func UserMiddleware(app *gormx.Instance) fiber.Handler {
+func UserMiddleware(app *gormz.Instance) fiber.Handler {
     return func(c *fiber.Ctx) error {
-        ctx := gormx.WithDB(c.UserContext(), app)
+        ctx := gormz.WithDB(c.UserContext(), app)
         c.SetUserContext(ctx)
         return c.Next()
     }
 }
 
 func GetUsers(c *fiber.Ctx) error {
-    users, _ := gormx.FromContext[User](c.UserContext()).All()
+    users, _ := gormz.FromContext[User](c.UserContext()).All()
     return c.JSON(users)
 }
 ```
@@ -68,7 +68,7 @@ func GetUsersWithTimeout() ([]User, error) {
     ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
     defer cancel()
 
-    return gormx.FromContext[User](ctx).All()
+    return gormz.FromContext[User](ctx).All()
     // إذا تجاوز 5s → context deadline exceeded
 }
 ```
@@ -85,7 +85,7 @@ func TenantMiddleware(mgr *TenantManager) fiber.Handler {
             return c.Status(400).JSON(fiber.Map{"error": "invalid tenant"})
         }
 
-        ctx := gormx.WithDB(c.UserContext(), inst)
+        ctx := gormz.WithDB(c.UserContext(), inst)
         c.SetUserContext(ctx)
         return c.Next()
     }
@@ -118,7 +118,7 @@ func CreateUser(c *fiber.Ctx) error {
     traceID, _ := ctx.Value("trace_id").(string)
 
     log.Printf("[%s] Creating user", traceID)
-    return gormx.FromContext[User](ctx).Create(&user)
+    return gormz.FromContext[User](ctx).Create(&user)
 }
 ```
 
@@ -129,7 +129,7 @@ func CreateUser(c *fiber.Ctx) error {
 func Service(ctx context.Context) error {
     // إذا ctx فيه DB → يستخدمه
     // وإلا → global
-    q := gormx.FromContext[User](ctx)
+    q := gormz.FromContext[User](ctx)
     return q.Create(&user)
 }
 ```
@@ -141,12 +141,12 @@ func Service(ctx context.Context) error {
 ```go
 func ProcessOrder(ctx context.Context, orderID uint) error {
     // استخدم ctx في كل عمليات DB
-    order, err := gormx.FromContext[Order](ctx).Get(orderID)
+    order, err := gormz.FromContext[Order](ctx).Get(orderID)
     if err != nil {
         return err
     }
 
-    user, err := gormx.FromContext[User](ctx).Get(order.UserID)
+    user, err := gormz.FromContext[User](ctx).Get(order.UserID)
     if err != nil {
         return err
     }
@@ -164,7 +164,7 @@ func ProcessOrder(ctx context.Context, orderID uint) error {
 
 ```go
 ctx := context.Background()
-ctx = gormx.WithDB(ctx, app)  // ← ضروري إعادة التخصيص
+ctx = gormz.WithDB(ctx, app)  // ← ضروري إعادة التخصيص
 ```
 
 ### 2. Do Not Store in Structs
@@ -185,17 +185,17 @@ func (s *Service) Do(ctx context.Context) error {
 
 ```go
 // ❌ panic
-gormx.FromContext[User](nil)
+gormz.FromContext[User](nil)
 
 // ✅
-gormx.FromContext[User](context.Background())
+gormz.FromContext[User](context.Background())
 ```
 
 ### 4. Context Overhead
 
 ```go
 // كل WithDB ينسخ context — رخيص لكن موجود
-ctx := gormx.WithDB(context.Background(), app)
+ctx := gormz.WithDB(context.Background(), app)
 ```
 
 ---
@@ -207,7 +207,7 @@ ctx := gormx.WithDB(context.Background(), app)
 ```go
 func NewRequestContext(r *http.Request) context.Context {
     ctx := r.Context()
-    ctx = gormx.WithDB(ctx, getDBForRequest(r))
+    ctx = gormz.WithDB(ctx, getDBForRequest(r))
     ctx = context.WithValue(ctx, "request_id", r.Header.Get("X-Request-ID"))
     return ctx
 }
@@ -220,7 +220,7 @@ func ProcessJob(ctx context.Context, jobID uint) error {
     ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
     defer cancel()
 
-    return gormx.FromContext[Job](ctx).Get(jobID)
+    return gormz.FromContext[Job](ctx).Get(jobID)
 }
 ```
 
@@ -230,16 +230,16 @@ func ProcessJob(ctx context.Context, jobID uint) error {
 func setupTest(t *testing.T) context.Context {
     db, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
     db.AutoMigrate(&User{})
-    inst := gormx.NewInstance(db)
+    inst := gormz.NewInstance(db)
 
-    return gormx.WithDB(context.Background(), inst)
+    return gormz.WithDB(context.Background(), inst)
 }
 
 func TestCreate(t *testing.T) {
     ctx := setupTest(t)
 
     user := &User{Name: "Ali"}
-    err := gormx.FromContext[User](ctx).Create(user)
+    err := gormz.FromContext[User](ctx).Create(user)
     require.NoError(t, err)
 }
 ```

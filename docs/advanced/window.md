@@ -53,7 +53,7 @@ type Result struct {
 
 var results []Result
 
-err := gormx.New[Order]().
+err := gormz.New[Order]().
     Select(
         "user_id",
         "id as order_id",
@@ -67,7 +67,7 @@ err := gormx.New[Order]().
 
 ```go
 // ترتيب الطلاب في كل صف
-rows := gormx.New[Student]().
+rows := gormz.New[Student]().
     Select(
         "name",
         "score",
@@ -90,7 +90,7 @@ type MonthlyStat struct {
 
 var stats []MonthlyStat
 
-err := gormx.New[Sale]().
+err := gormz.New[Sale]().
     Select(`
         strftime('%Y-%m', created_at) as month,
         SUM(amount) as revenue,
@@ -114,7 +114,7 @@ type DailySales struct {
 
 var sales []DailySales
 
-err := gormx.New[Sale]().
+err := gormz.New[Sale]().
     Select(`
         DATE(created_at) as date,
         SUM(amount) as daily_amount,
@@ -139,7 +139,7 @@ type TopEmployee struct {
 var results []TopEmployee
 
 // استخدم subquery
-subq := gormx.DB().Raw(`
+subq := gormz.DB().Raw(`
     SELECT * FROM (
         SELECT
             department_id,

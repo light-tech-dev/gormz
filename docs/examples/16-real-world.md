@@ -1,6 +1,6 @@
 # Example 16: تطبيق كامل
 
-> بناء مدونة كاملة مع gormx.
+> بناء مدونة كاملة مع gormz.
 
 ---
 
@@ -89,10 +89,10 @@ type Comment struct {
 
 ```go
 type UserService struct {
-    db *gormx.Instance
+    db *gormz.Instance
 }
 
-func NewUserService(db *gormx.Instance) *UserService {
+func NewUserService(db *gormz.Instance) *UserService {
     return &UserService{db: db}
 }
 
@@ -153,10 +153,10 @@ func (s *UserService) Login(ctx context.Context, email, password string) (*User,
 
 ```go
 type PostService struct {
-    db *gormx.Instance
+    db *gormz.Instance
 }
 
-func NewPostService(db *gormx.Instance) *PostService {
+func NewPostService(db *gormz.Instance) *PostService {
     return &PostService{db: db}
 }
 
@@ -271,7 +271,7 @@ func (s *PostService) List(ctx context.Context, filter PostFilter) (*advanced.Pa
 
 ```go
 type CommentService struct {
-    db *gormx.Instance
+    db *gormz.Instance
 }
 
 func (s *CommentService) Create(ctx context.Context, postID, userID uint, content string, parentID *uint) (*Comment, error) {
@@ -434,7 +434,7 @@ func (h *Handler) CreateComment(c *fiber.Ctx) error {
 
 ```go
 type StatsService struct {
-    db *gormx.Instance
+    db *gormz.Instance
 }
 
 type BlogStats struct {
@@ -498,16 +498,16 @@ func (s *StatsService) Get(ctx context.Context) (*BlogStats, error) {
 func main() {
     // 1. DB
     db, _ := gorm.Open(sqlite.Open("blog.db"), &gorm.Config{})
-    gormx.SetDB(db)
+    gormz.SetDB(db)
 
     // 2. Migrate
-    gormx.MustMigrate[User]()
-    gormx.MustMigrate[Post]()
-    gormx.MustMigrate[Category]()
-    gormx.MustMigrate[Comment]()
+    gormz.MustMigrate[User]()
+    gormz.MustMigrate[Post]()
+    gormz.MustMigrate[Category]()
+    gormz.MustMigrate[Comment]()
 
     // 3. Services
-    inst := gormx.GlobalInstance()
+    inst := gormz.GlobalInstance()
     users := NewUserService(inst)
     posts := NewPostService(inst)
     comments := NewCommentService(inst)
@@ -563,7 +563,7 @@ func main() {
 - ✅ Handlers مع Fiber
 - ✅ Stats مع GroupBy
 
-**كل ميزة في gormx مستخدمة**.
+**كل ميزة في gormz مستخدمة**.
 
 ---
 

@@ -1,4 +1,4 @@
-package gormx
+package gormz
 
 import (
 	"context"
@@ -113,8 +113,8 @@ func GlobalInstance() *Instance {
 
 // NewWith ينشئ QuerySet[T] على Instance معين.
 //
-//	app := gormx.NewInstance(db)
-//	users, _ := gormx.NewWith[User](app).All()
+//	app := gormz.NewInstance(db)
+//	users, _ := gormz.NewWith[User](app).All()
 func NewWith[T any](i *Instance) *QuerySet[T] {
 	if i == nil {
 		panic(ErrNilDB)
@@ -124,8 +124,8 @@ func NewWith[T any](i *Instance) *QuerySet[T] {
 
 // QueryOn ينشئ QuerySet جديدًا على Instance.
 //
-//	app := gormx.NewInstance(db)
-//	users, _ := gormx.QueryOn[User](app).Filter("active", true).All()
+//	app := gormz.NewInstance(db)
+//	users, _ := gormz.QueryOn[User](app).Filter("active", true).All()
 //
 // ملاحظة: هذه دالة وليست method لأن Go لا يسمح بـ generic methods.
 func QueryOn[T any](i *Instance) *QuerySet[T] {

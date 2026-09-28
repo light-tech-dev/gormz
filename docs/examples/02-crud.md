@@ -1,6 +1,6 @@
 # Example 2: CRUD كامل
 
-> كل عمليات CRUD مع gormx.
+> كل عمليات CRUD مع gormz.
 
 ---
 
@@ -14,7 +14,7 @@ import (
     "log"
     "time"
 
-    "github.com/abdallah-elngar/gormx"
+    "github.com/light-tech-dev/gormz"
     "gorm.io/driver/sqlite"
     "gorm.io/gorm"
 )
@@ -33,8 +33,8 @@ type User struct {
 func main() {
     // Setup
     db, _ := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{})
-    gormx.SetDB(db)
-    gormx.MustMigrate[User]()
+    gormz.SetDB(db)
+    gormz.MustMigrate[User]()
 
     fmt.Println("✅ DB ready")
 
@@ -61,7 +61,7 @@ func createExample() {
         Age:    30,
         Active: true,
     }
-    if err := gormx.New[User]().Create(user); err != nil {
+    if err := gormz.New[User]().Create(user); err != nil {
         log.Fatal(err)
     }
     fmt.Printf("Created user ID: %d\n", user.ID)
@@ -72,7 +72,7 @@ func createExample() {
         {Name: "سارة", Email: "sara@test.com", Age: 25},
         {Name: "عمر", Email: "omar@test.com", Age: 35},
     }
-    if err := gormx.New[User]().CreateMany(users); err != nil {
+    if err := gormz.New[User]().CreateMany(users); err != nil {
         log.Fatal(err)
     }
     fmt.Printf("Created %d users\n", len(users))
@@ -89,7 +89,7 @@ func readExample() {
     fmt.Println("\n=== READ ===")
 
     // الحصول بالـ ID
-    user, err := gormx.New[User]().Get(1)
+    user, err := gormz.New[User]().Get(1)
     if err != nil {
         log.Fatal(err)
     }
@@ -97,17 +97,17 @@ func readExample() {
     // Output: Got: علي (ali@test.com)
 
     // الحصول بشروط
-    sara, _ := gormx.New[User]().Find("email", "sara@test.com")
+    sara, _ := gormz.New[User]().Find("email", "sara@test.com")
     fmt.Printf("Found: %s\n", sara.Name)
     // Output: Found: سارة
 
     // كل السجلات
-    all, _ := gormx.New[User]().All()
+    all, _ := gormz.New[User]().All()
     fmt.Printf("Total: %d users\n", len(all))
     // Output: Total: 3 users
 
     // مع فلتر
-    adults, _ := gormx.New[User]().
+    adults, _ := gormz.New[User]().
         Filter("age__gte", 30).
         OrderBy("name").
         All()
@@ -115,12 +115,12 @@ func readExample() {
     // Output: Adults (30+): 2
 
     // Count
-    count, _ := gormx.New[User]().Count()
+    count, _ := gormz.New[User]().Count()
     fmt.Printf("Count: %d\n", count)
     // Output: Count: 3
 
     // Exists
-    exists, _ := gormx.New[User]().Filter("email", "ali@test.com").Exists()
+    exists, _ := gormz.New[User]().Filter("email", "ali@test.com").Exists()
     fmt.Printf("Ali exists: %v\n", exists)
     // Output: Ali exists: true
 }
@@ -135,18 +135,18 @@ func updateExample() {
     fmt.Println("\n=== UPDATE ===")
 
     // تحديث حقل واحد
-    if err := gormx.New[User]().Update(1, "age", 31); err != nil {
+    if err := gormz.New[User]().Update(1, "age", 31); err != nil {
         log.Fatal(err)
     }
     fmt.Println("Updated age")
 
     // التحقق
-    user, _ := gormx.New[User]().Get(1)
+    user, _ := gormz.New[User]().Get(1)
     fmt.Printf("New age: %d\n", user.Age)
     // Output: New age: 31
 
     // تحديث متعدد
-    affected, err := gormx.New[User]().
+    affected, err := gormz.New[User]().
         Filter("age__lt", 30).
         UpdateMany(map[string]any{
             "active": false,
@@ -159,7 +159,7 @@ func updateExample() {
 
     // Save (upsert)
     user.Name = "علي المحدث"
-    if err := gormx.New[User]().Save(user); err != nil {
+    if err := gormz.New[User]().Save(user); err != nil {
         log.Fatal(err)
     }
     fmt.Println("Saved user")
@@ -175,36 +175,36 @@ func deleteExample() {
     fmt.Println("\n=== DELETE ===")
 
     // Soft delete
-    if err := gormx.New[User]().Delete(3); err != nil {
+    if err := gormz.New[User]().Delete(3); err != nil {
         log.Fatal(err)
     }
     fmt.Println("Deleted user 3 (soft)")
 
     // لم يعد مرئيًا
-    all, _ := gormx.New[User]().All()
+    all, _ := gormz.New[User]().All()
     fmt.Printf("Visible: %d\n", len(all))
     // Output: Visible: 2
 
     // لكن موجود في DB
-    all, _ = gormx.New[User]().WithDeleted().All()
+    all, _ = gormz.New[User]().WithDeleted().All()
     fmt.Printf("With deleted: %d\n", len(all))
     // Output: With deleted: 3
 
     // استعادة
-    if err := gormx.New[User]().Restore(3); err != nil {
+    if err := gormz.New[User]().Restore(3); err != nil {
         log.Fatal(err)
     }
     fmt.Println("Restored user 3")
 
     // Hard delete
-    if err := gormx.New[User]().HardDelete(2); err != nil {
+    if err := gormz.New[User]().HardDelete(2); err != nil {
         log.Fatal(err)
     }
     fmt.Println("Hard deleted user 2")
 
     // تأكيد
-    _, err := gormx.New[User]().WithDeleted().Get(2)
-    fmt.Printf("User 2 gone: %v\n", gormx.IsNotFound(err))
+    _, err := gormz.New[User]().WithDeleted().Get(2)
+    fmt.Printf("User 2 gone: %v\n", gormz.IsNotFound(err))
     // Output: User 2 gone: true
 }
 ```

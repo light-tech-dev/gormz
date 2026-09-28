@@ -49,7 +49,7 @@ cb.Call(fn)
 ```go
 err := advanced.Retry(ctx, advanced.DefaultRetryConfig(),
     func() error {
-        return gormx.New[User]().Create(&user)
+        return gormz.New[User]().Create(&user)
     })
 ```
 
@@ -160,10 +160,10 @@ advanced.Retry(ctx, cfg, fn)
 
 ```go
 // ✅ آمن للـ retry
-gormx.New[User]().Filter("id", 1).Update("name", "Ali")
+gormz.New[User]().Filter("id", 1).Update("name", "Ali")
 
 // ❌ ليس آمنًا (ينشئ نسخًا)
-gormx.New[User]().Create(&user)
+gormz.New[User]().Create(&user)
 ```
 
 ---

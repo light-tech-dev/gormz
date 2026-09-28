@@ -1,20 +1,20 @@
-// Package gormx provides a Django-inspired, type-safe ORM layer on top of GORM.
+// Package gormz provides a Type-safe, type-safe ORM layer on top of GORM.
 //
 // # Philosophy
 //
-// gormx keeps GORM's power while offering a cleaner, more intuitive API:
+// gormz keeps GORM's power while offering a cleaner, more intuitive API:
 //
 //	// Instead of GORM's verbose queries:
 //	var users []User
 //	db.Model(&User{}).Where("age > ?", 18).Order("name").Find(&users)
 //
-//	// Use gormx's fluent, type-safe API:
-//	users, _ := gormx.New[User]().Filter("age__gt", 18).OrderBy("name").All()
+//	// Use gormz's fluent, type-safe API:
+//	users, _ := gormz.New[User]().Filter("age__gt", 18).OrderBy("name").All()
 //
 // # Key Features
 //
 //   - Type-safe generic QuerySet[T]
-//   - Django-style lookups (`__gt`, `__in`, `__contains`, ...)
+//   - modern-style lookups (`__gt`, `__in`, `__contains`, ...)
 //   - Multi-DB support via Instance
 //   - Immutable, thread-safe queries
 //   - Context-first design
@@ -26,13 +26,13 @@
 //
 //	// 1. Set up the global DB
 //	db, _ := gorm.Open(sqlite.Open("app.db"), &gorm.Config{})
-//	gormx.SetDB(db)
+//	gormz.SetDB(db)
 //
 //	// 2. Migrate
-//	gormx.MustMigrate[User]()
+//	gormz.MustMigrate[User]()
 //
 //	// 3. Query
-//	users, err := gormx.New[User]().
+//	users, err := gormz.New[User]().
 //	    Filter("active", true).
 //	    Filter("age__gte", 18).
 //	    OrderBy("-created_at").
@@ -41,20 +41,20 @@
 //
 // # Multi-DB
 //
-//	app := gormx.NewInstance(db)
+//	app := gormz.NewInstance(db)
 //	q := app.Query[User]()
 //	users, _ := q.Filter("active", true).All()
 //
 // # Registry
 //
-//	var Objects = gormx.Register[User]("user")
-package gormx
+//	var Objects = gormz.Register[User]("user")
+package gormz
 
 import (
 	"context"
 	"errors"
 
-	"github.com/abdallah-elngar/gormx/internal"
+	"github.com/light-tech-dev/gormz/internal"
 	"gorm.io/gorm"
 )
 
@@ -62,14 +62,14 @@ import (
 // Version & Metadata
 // ═══════════════════════════════════════════════
 
-// Version هو إصدار gormx الحالي.
+// Version هو إصدار gormz الحالي.
 const Version = "0.1.0"
 
 // Author معلومات المؤلف.
 const (
 	Author  = "Sanad Team"
 	License = "MIT"
-	URL     = "https://github.com/abdallah-elngar/gormx"
+	URL     = "https://github.com/light-tech-dev/gormz"
 )
 
 // ═══════════════════════════════════════════════
@@ -81,7 +81,7 @@ var globalDB *gorm.DB
 // SetDB يربط GORM عالميًا. يجب أن يُنادى قبل أي استعلام.
 //
 //	db, _ := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-//	gormx.SetDB(db)
+//	gormz.SetDB(db)
 //
 // يpanic إذا كان db == nil.
 func SetDB(d *gorm.DB) {
@@ -119,7 +119,7 @@ func ResetDB() {
 
 // Migrate يهاجر موديل T.
 //
-//	err := gormx.Migrate[User]()
+//	err := gormz.Migrate[User]()
 func Migrate[T any]() error {
 	var zero T
 	return DB().AutoMigrate(&zero)
@@ -127,7 +127,7 @@ func Migrate[T any]() error {
 
 // MustMigrate مثل Migrate لكن يpanic عند الخطأ.
 //
-//	gormx.MustMigrate[User]()
+//	gormz.MustMigrate[User]()
 func MustMigrate[T any]() {
 	if err := Migrate[T](); err != nil {
 		panic(err)
@@ -136,7 +136,7 @@ func MustMigrate[T any]() {
 
 // MigrateAll يهاجر عدة موديلات.
 //
-//	gormx.MigrateAll(&User{}, &Order{}, &Product{})
+//	gormz.MigrateAll(&User{}, &Order{}, &Product{})
 func MigrateAll(models ...any) error {
 	if len(models) == 0 {
 		return nil
@@ -155,7 +155,7 @@ func MustMigrateAll(models ...any) {
 //
 // ⚠️ يحذف كل البيانات!
 //
-//	gormx.DropTable[User]()
+//	gormz.DropTable[User]()
 func DropTable[T any]() error {
 	var zero T
 	return DB().Migrator().DropTable(&zero)
@@ -173,28 +173,28 @@ func HasTable[T any]() bool {
 
 // TableNameOf يرجّع اسم الجدول لموديل T.
 //
-//	fmt.Println(gormx.TableNameOf[User]())  // "users"
+//	fmt.Println(gormz.TableNameOf[User]())  // "users"
 func TableNameOf[T any]() string {
 	return internal.TableName[T]()
 }
 
 // ModelNameOf يرجّع اسم الموديل T.
 //
-//	fmt.Println(gormx.ModelNameOf[User]())  // "User"
+//	fmt.Println(gormz.ModelNameOf[User]())  // "User"
 func ModelNameOf[T any]() string {
 	return internal.ModelName[T]()
 }
 
 // FieldNamesOf يرجّع أسماء الأعمدة لموديل T.
 //
-//	fmt.Println(gormx.FieldNamesOf[User]())  // ["id", "name", "email"]
+//	fmt.Println(gormz.FieldNamesOf[User]())  // ["id", "name", "email"]
 func FieldNamesOf[T any]() []string {
 	return internal.FieldNames[T]()
 }
 
 // ColumnNameOf يرجّع اسم العمود لموديل T.
 //
-//	col, err := gormx.ColumnNameOf[User]("Email")
+//	col, err := gormz.ColumnNameOf[User]("Email")
 //	// col = "email"
 func ColumnNameOf[T any](goField string) (string, error) {
 	info := internal.GetModelInfo[T]()
@@ -222,7 +222,7 @@ type Tx = gorm.DB
 
 // Transaction ينفّذ عملية داخل transaction.
 //
-//	err := gormx.Transaction(ctx, func(tx *gorm.DB) error {
+//	err := gormz.Transaction(ctx, func(tx *gorm.DB) error {
 //	    if err := tx.Create(&user).Error; err != nil {
 //	        return err
 //	    }
@@ -230,7 +230,7 @@ type Tx = gorm.DB
 //	})
 func Transaction(ctx context.Context, fn func(tx *gorm.DB) error) error {
 	if fn == nil {
-		return errors.New("gormx: nil transaction callback")
+		return errors.New("gormz: nil transaction callback")
 	}
 	return DB().WithContext(ctx).Transaction(fn)
 }

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/abdallah-elngar/gormx"
+	"github.com/light-tech-dev/gormz"
 	"gorm.io/gorm"
 )
 
@@ -62,13 +62,13 @@ var savepointNameRegex = regexp.MustCompile(`^[a-zA-Z_][a-zA-Z0-9_]*$`)
 
 func validateSavepointName(name string) error {
 	if name == "" {
-		return errors.New("gormx/advanced: empty savepoint name")
+		return errors.New("gormz/advanced: empty savepoint name")
 	}
 	if len(name) > 64 {
-		return errors.New("gormx/advanced: savepoint name too long")
+		return errors.New("gormz/advanced: savepoint name too long")
 	}
 	if !savepointNameRegex.MatchString(name) {
-		return fmt.Errorf("gormx/advanced: invalid savepoint name %q", name)
+		return fmt.Errorf("gormz/advanced: invalid savepoint name %q", name)
 	}
 	return nil
 }
@@ -77,7 +77,7 @@ func validateSavepointName(name string) error {
 // Tx — يمثل معاملة
 // ═══════════════════════════════════════════════
 
-// Tx يمثل معاملة مع API gormx.
+// Tx يمثل معاملة مع API gormz.
 type Tx struct {
 	tx     *gorm.DB
 	ctx    context.Context
@@ -102,7 +102,7 @@ func Begin(ctx context.Context, cfg TxConfig) (*Tx, error) {
 		ctx = context.Background()
 	}
 
-	db := gormx.DB().WithContext(ctx)
+	db := gormz.DB().WithContext(ctx)
 
 	tx := db.Begin()
 	if tx.Error != nil {
@@ -123,14 +123,14 @@ func (t *Tx) DB() *gorm.DB {
 
 // Instance يرجّع Instance على هذه المعاملة.
 //
-// استخدمه مع gormx.NewWith:
+// استخدمه مع gormz.NewWith:
 //
-//	users, _ := gormx.NewWith[User](tx.Instance()).All()
-func (t *Tx) Instance() *gormx.Instance {
+//	users, _ := gormz.NewWith[User](tx.Instance()).All()
+func (t *Tx) Instance() *gormz.Instance {
 	if t.tx == nil {
-		panic("gormx/advanced: transaction already finished")
+		panic("gormz/advanced: transaction already finished")
 	}
-	return gormx.NewInstance(t.tx)
+	return gormz.NewInstance(t.tx)
 }
 
 // Context يرجّع context المعاملة.
@@ -151,7 +151,7 @@ func (t *Tx) IsActive() bool {
 // Commit ينفّذ commit.
 func (t *Tx) Commit() error {
 	if t.tx == nil {
-		return errors.New("gormx/advanced: transaction already finished")
+		return errors.New("gormz/advanced: transaction already finished")
 	}
 	err := t.tx.Commit().Error
 	t.tx = nil
@@ -161,7 +161,7 @@ func (t *Tx) Commit() error {
 // Rollback يتراجع.
 func (t *Tx) Rollback() error {
 	if t.tx == nil {
-		return errors.New("gormx/advanced: transaction already finished")
+		return errors.New("gormz/advanced: transaction already finished")
 	}
 	err := t.tx.Rollback().Error
 	t.tx = nil
@@ -189,19 +189,19 @@ func (t *Tx) RollbackIfActive() {
 //	advanced.Query[User](tx).Create(&user)
 //
 // ملاحظة: هذه دالة وليست method لأن Go لا يسمح بـ generic methods.
-func Query[T any](t *Tx) *gormx.QuerySet[T] {
+func Query[T any](t *Tx) *gormz.QuerySet[T] {
 	if t == nil || t.tx == nil {
-		panic("gormx/advanced: transaction already finished")
+		panic("gormz/advanced: transaction already finished")
 	}
-	return gormx.NewWith[T](gormx.NewInstance(t.tx))
+	return gormz.NewWith[T](gormz.NewInstance(t.tx))
 }
 
 // QueryWithContext مثل Query لكن مع context.
-func QueryWithContext[T any](t *Tx, ctx context.Context) *gormx.QuerySet[T] {
+func QueryWithContext[T any](t *Tx, ctx context.Context) *gormz.QuerySet[T] {
 	if t == nil || t.tx == nil {
-		panic("gormx/advanced: transaction already finished")
+		panic("gormz/advanced: transaction already finished")
 	}
-	q := gormx.NewWith[T](gormx.NewInstance(t.tx))
+	q := gormz.NewWith[T](gormz.NewInstance(t.tx))
 	if ctx != nil {
 		return q.WithContext(ctx)
 	}
@@ -224,7 +224,7 @@ func QueryWithContext[T any](t *Tx, ctx context.Context) *gormx.QuerySet[T] {
 //	    })
 func WithTransaction(ctx context.Context, cfg TxConfig, fn func(tx *Tx) error) error {
 	if fn == nil {
-		return errors.New("gormx/advanced: nil transaction callback")
+		return errors.New("gormz/advanced: nil transaction callback")
 	}
 
 	var lastErr error
@@ -255,7 +255,7 @@ func WithTransaction(ctx context.Context, cfg TxConfig, fn func(tx *Tx) error) e
 		}
 	}
 
-	return fmt.Errorf("gormx/advanced: transaction failed after %d attempts: %w", attempts, lastErr)
+	return fmt.Errorf("gormz/advanced: transaction failed after %d attempts: %w", attempts, lastErr)
 }
 
 // runTxOnce ينفّذ معاملة واحدة.
@@ -268,7 +268,7 @@ func runTxOnce(ctx context.Context, cfg TxConfig, fn func(tx *Tx) error) (err er
 	defer func() {
 		if r := recover(); r != nil {
 			tx.RollbackIfActive()
-			err = fmt.Errorf("gormx/advanced: panic in transaction: %v", r)
+			err = fmt.Errorf("gormz/advanced: panic in transaction: %v", r)
 		}
 	}()
 
@@ -311,21 +311,21 @@ func isRetryableError(err error) bool {
 //	})
 func (t *Tx) Nested(fn func(tx *Tx) error) error {
 	if t.tx == nil {
-		return errors.New("gormx/advanced: transaction not active")
+		return errors.New("gormz/advanced: transaction not active")
 	}
 	if fn == nil {
-		return errors.New("gormx/advanced: nil nested callback")
+		return errors.New("gormz/advanced: nil nested callback")
 	}
 
 	savepointName := fmt.Sprintf("sp_%d", time.Now().UnixNano())
 
 	if err := t.tx.SavePoint(savepointName).Error; err != nil {
-		return fmt.Errorf("gormx/advanced: create savepoint failed: %w", err)
+		return fmt.Errorf("gormz/advanced: create savepoint failed: %w", err)
 	}
 
 	if err := fn(t); err != nil {
 		if rbErr := t.tx.RollbackTo(savepointName).Error; rbErr != nil {
-			return fmt.Errorf("gormx/advanced: rollback to savepoint failed: %w (original: %v)", rbErr, err)
+			return fmt.Errorf("gormz/advanced: rollback to savepoint failed: %w (original: %v)", rbErr, err)
 		}
 		return err
 	}
@@ -342,7 +342,7 @@ func (t *Tx) Nested(fn func(tx *Tx) error) error {
 // ⚠️ الاسم يجب أن يطابق: ^[a-zA-Z_][a-zA-Z0-9_]*$
 func (t *Tx) Savepoint(name string) error {
 	if t.tx == nil {
-		return errors.New("gormx/advanced: transaction not active")
+		return errors.New("gormz/advanced: transaction not active")
 	}
 	if err := validateSavepointName(name); err != nil {
 		return err
@@ -353,7 +353,7 @@ func (t *Tx) Savepoint(name string) error {
 // RollbackTo يتراجع إلى savepoint.
 func (t *Tx) RollbackTo(name string) error {
 	if t.tx == nil {
-		return errors.New("gormx/advanced: transaction not active")
+		return errors.New("gormz/advanced: transaction not active")
 	}
 	if err := validateSavepointName(name); err != nil {
 		return err
@@ -364,7 +364,7 @@ func (t *Tx) RollbackTo(name string) error {
 // ReleaseSavepoint يحذف savepoint.
 func (t *Tx) ReleaseSavepoint(name string) error {
 	if t.tx == nil {
-		return errors.New("gormx/advanced: transaction not active")
+		return errors.New("gormz/advanced: transaction not active")
 	}
 	if err := validateSavepointName(name); err != nil {
 		return err

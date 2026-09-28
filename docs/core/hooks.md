@@ -1,14 +1,14 @@
 # Hooks — دورة حياة الموديل
 
-> BeforeCreate, AfterUpdate, ... — كل hooks gormx.
+> BeforeCreate, AfterUpdate, ... — كل hooks gormz.
 
 ---
 
 ## 📖 نظرة عامة
 
-gormx يدعم كل hooks GORM **natively** + يعيد تصديرها كـ interfaces.
+gormz يدعم كل hooks GORM **natively** + يعيد تصديرها كـ interfaces.
 
-**كيف يعمل**: نفّذ أي hook على موديلك، gormx سيدعوه تلقائيًا.
+**كيف يعمل**: نفّذ أي hook على موديلك، gormz سيدعوه تلقائيًا.
 
 ---
 
@@ -69,7 +69,7 @@ func (u *User) BeforeCreate() error {
 
 // استخدام
 user := &User{Name: "  Ali  ", Email: "  ALI@TEST.COM  "}
-gormx.New[User]().Create(user)
+gormz.New[User]().Create(user)
 // user.Name = "Ali", user.Email = "ali@test.com"
 ```
 
@@ -167,16 +167,16 @@ func (u *User) BeforeUpdate() error {
 
 ---
 
-## 🔧 Usage مع gormx
+## 🔧 Usage مع gormz
 
 ### مع `QuerySet`
 
 ```go
 // Hooks تعمل تلقائيًا
-gormx.New[User]().Create(user)      // ← BeforeCreate, AfterCreate
-gormx.New[User]().Save(user)        // ← BeforeSave, AfterSave
-gormx.New[User]().Delete(id)        // ← BeforeDelete, AfterDelete
-gormx.New[User]().All()             // ← AfterFind لكل سجل
+gormz.New[User]().Create(user)      // ← BeforeCreate, AfterCreate
+gormz.New[User]().Save(user)        // ← BeforeSave, AfterSave
+gormz.New[User]().Delete(id)        // ← BeforeDelete, AfterDelete
+gormz.New[User]().All()             // ← AfterFind لكل سجل
 ```
 
 ### مع Bulk
@@ -185,7 +185,7 @@ gormx.New[User]().All()             // ← AfterFind لكل سجل
 
 ```go
 // ✅ يدعو hooks
-gormx.New[User]().Create(user)
+gormz.New[User]().Create(user)
 
 // ⚠️ قد لا يدعو (للسرعة)
 advanced.BulkInsert[User](ctx, users, cfg)
@@ -194,7 +194,7 @@ advanced.BulkInsert[User](ctx, users, cfg)
 **الحل**: استخدم `CreateMany` إذا احتجت hooks:
 
 ```go
-gormx.New[User]().CreateMany(users)  // ← يدعو hooks
+gormz.New[User]().CreateMany(users)  // ← يدعو hooks
 ```
 
 ---
@@ -208,11 +208,11 @@ Hooks تُنفَّذ لكل سجل. للـ bulk، استخدم batch:
 ```go
 // ❌ بطيء
 for _, user := range users {
-    gormx.New[User]().Create(&user)  // hooks لكل واحد
+    gormz.New[User]().Create(&user)  // hooks لكل واحد
 }
 
 // ✅ أسرع
-gormx.New[User]().CreateMany(users)  // hooks للأول فقط أو لا شيء
+gormz.New[User]().CreateMany(users)  // hooks للأول فقط أو لا شيء
 ```
 
 ### 2. Transactions
@@ -233,7 +233,7 @@ func (u *User) BeforeCreate() error {
 ```go
 // ❌ infinite loop
 func (u *User) AfterSave() error {
-    return gormx.New[User]().Save(u).Error
+    return gormz.New[User]().Save(u).Error
 }
 ```
 
@@ -252,14 +252,14 @@ func (u *User) BeforeCreate() error {
 
 // قبل الإنشاء
 currentUserID = getCurrentUserID(c)
-gormx.New[User]().Create(user)
+gormz.New[User]().Create(user)
 ```
 
 أو استخدم context value مع `WithContext`:
 
 ```go
 ctx := context.WithValue(context.Background(), "user_id", 1)
-gormx.New[User]().WithContext(ctx).Create(user)
+gormz.New[User]().WithContext(ctx).Create(user)
 ```
 
 ---

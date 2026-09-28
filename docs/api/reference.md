@@ -1,6 +1,6 @@
 # API Reference — المرجع الكامل
 
-> كل الدوال والأنواع في gormx.
+> كل الدوال والأنواع في gormz.
 
 ---
 
@@ -266,7 +266,7 @@ type PaginatedResult[T any] struct {
 
 ---
 
-## 🚀 Advanced (gormx/advanced)
+## 🚀 Advanced (gormz/advanced)
 
 ### Transactions
 
@@ -438,5 +438,5 @@ type contextKey struct
 const Version = "0.1.0"
 const Author  = "Sanad Team"
 const License = "MIT"
-const URL     = "https://github.com/abdallah-elngar/gormx"
+const URL     = "https://github.com/light-tech-dev/gormz"
 ```

@@ -1,11 +1,11 @@
-package gormx_test
+package gormz_test
 
 import (
 	"context"
 	"errors"
 	"testing"
 
-	"github.com/abdallah-elngar/gormx"
+	"github.com/light-tech-dev/gormz"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/sqlite"
@@ -24,12 +24,12 @@ func TestInstance_Query(t *testing.T) {
 	require.NoError(t, err)
 	require.NoError(t, db.AutoMigrate(&User{}))
 
-	app := gormx.NewInstance(db)
+	app := gormz.NewInstance(db)
 
 	user := &User{Name: "Ali", Email: "ali@test.com"}
-	require.NoError(t, gormx.QueryOn[User](app).Create(user))
+	require.NoError(t, gormz.QueryOn[User](app).Create(user))
 
-	users, err := gormx.QueryOn[User](app).All()
+	users, err := gormz.QueryOn[User](app).All()
 	require.NoError(t, err)
 	assert.Len(t, users, 1)
 }
@@ -41,7 +41,7 @@ func TestInstance_Multiple(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NoError(t, db1.AutoMigrate(&User{}))
-	app1 := gormx.NewInstance(db1)
+	app1 := gormz.NewInstance(db1)
 
 	// DB 2
 	db2, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
@@ -49,17 +49,17 @@ func TestInstance_Multiple(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NoError(t, db2.AutoMigrate(&User{}))
-	app2 := gormx.NewInstance(db2)
+	app2 := gormz.NewInstance(db2)
 
 	// Insert
-	require.NoError(t, gormx.QueryOn[User](app1).Create(&User{Name: "Ali", Email: "ali@test.com"}))
-	require.NoError(t, gormx.QueryOn[User](app2).Create(&User{Name: "Sara", Email: "sara@test.com"}))
-	require.NoError(t, gormx.QueryOn[User](app2).Create(&User{Name: "Omar", Email: "omar@test.com"}))
+	require.NoError(t, gormz.QueryOn[User](app1).Create(&User{Name: "Ali", Email: "ali@test.com"}))
+	require.NoError(t, gormz.QueryOn[User](app2).Create(&User{Name: "Sara", Email: "sara@test.com"}))
+	require.NoError(t, gormz.QueryOn[User](app2).Create(&User{Name: "Omar", Email: "omar@test.com"}))
 
 	// Counts
-	count1, err := gormx.QueryOn[User](app1).Count()
+	count1, err := gormz.QueryOn[User](app1).Count()
 	require.NoError(t, err)
-	count2, err := gormx.QueryOn[User](app2).Count()
+	count2, err := gormz.QueryOn[User](app2).Count()
 	require.NoError(t, err)
 
 	assert.Equal(t, int64(1), count1)
@@ -76,7 +76,7 @@ func TestInstance_Transaction(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NoError(t, db.AutoMigrate(&User{}))
-	app := gormx.NewInstance(db)
+	app := gormz.NewInstance(db)
 
 	// Successful transaction
 	err = app.Transaction(context.Background(), func(tx *gorm.DB) error {
@@ -84,7 +84,7 @@ func TestInstance_Transaction(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	count, err := gormx.QueryOn[User](app).Count()
+	count, err := gormz.QueryOn[User](app).Count()
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), count)
 
@@ -97,7 +97,7 @@ func TestInstance_Transaction(t *testing.T) {
 	})
 	assert.Error(t, err)
 
-	count, err = gormx.QueryOn[User](app).Count()
+	count, err = gormz.QueryOn[User](app).Count()
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), count)
 }
@@ -108,7 +108,7 @@ func TestInstance_Transaction_NilCallback(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NoError(t, db.AutoMigrate(&User{}))
-	app := gormx.NewInstance(db)
+	app := gormz.NewInstance(db)
 
 	err = app.Transaction(context.Background(), nil)
 	assert.Error(t, err)
@@ -123,14 +123,14 @@ func TestInstance_Ping(t *testing.T) {
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	require.NoError(t, err)
-	app := gormx.NewInstance(db)
+	app := gormz.NewInstance(db)
 
 	assert.NoError(t, app.Ping())
 }
 
 func TestInstance_NilPanics(t *testing.T) {
 	assert.Panics(t, func() {
-		gormx.NewInstance(nil)
+		gormz.NewInstance(nil)
 	})
 }
 
@@ -144,9 +144,9 @@ func TestInstance_NewWith(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NoError(t, db.AutoMigrate(&User{}))
-	app := gormx.NewInstance(db)
+	app := gormz.NewInstance(db)
 
-	q := gormx.NewWith[User](app)
+	q := gormz.NewWith[User](app)
 	require.NoError(t, q.Create(&User{Name: "Ali", Email: "ali@test.com"}))
 
 	users, err := q.All()
@@ -160,9 +160,9 @@ func TestInstance_QueryOn(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NoError(t, db.AutoMigrate(&User{}))
-	app := gormx.NewInstance(db)
+	app := gormz.NewInstance(db)
 
-	q := gormx.QueryOn[User](app)
+	q := gormz.QueryOn[User](app)
 	require.NoError(t, q.Create(&User{Name: "Ali", Email: "ali@test.com"}))
 
 	users, err := q.All()
@@ -172,12 +172,12 @@ func TestInstance_QueryOn(t *testing.T) {
 
 func TestInstance_NewWithNilPanics(t *testing.T) {
 	assert.Panics(t, func() {
-		gormx.NewWith[User](nil)
+		gormz.NewWith[User](nil)
 	})
 }
 
 func TestInstance_QueryOnNilPanics(t *testing.T) {
 	assert.Panics(t, func() {
-		gormx.QueryOn[User](nil)
+		gormz.QueryOn[User](nil)
 	})
 }

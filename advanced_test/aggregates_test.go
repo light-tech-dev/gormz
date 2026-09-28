@@ -3,8 +3,8 @@ package advanced_test
 import (
 	"testing"
 
-	"github.com/abdallah-elngar/gormx"
-	"github.com/abdallah-elngar/gormx/advanced"
+	"github.com/light-tech-dev/gormz"
+	"github.com/light-tech-dev/gormz/advanced"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,7 +19,7 @@ func TestGroupBy_Count(t *testing.T) {
 		{UserID: 2, Total: 50, Status: "pending"},
 		{UserID: 3, Total: 300, Status: "paid"},
 	}
-	require.NoError(t, gormx.New[Order]().CreateMany(orders))
+	require.NoError(t, gormz.New[Order]().CreateMany(orders))
 
 	results, err := advanced.GroupBy[Order]("user_id").
 		Count("id", "order_count").
@@ -39,7 +39,7 @@ func TestGroupBy_WithHaving(t *testing.T) {
 		{UserID: 1, Total: 150, Status: "paid"},
 		{UserID: 2, Total: 100, Status: "paid"},
 	}
-	require.NoError(t, gormx.New[Order]().CreateMany(orders))
+	require.NoError(t, gormz.New[Order]().CreateMany(orders))
 
 	type UserStats struct {
 		UserID     uint
@@ -66,7 +66,7 @@ func TestGroupBy_WithFilter(t *testing.T) {
 		{UserID: 1, Total: 200, Status: "pending"},
 		{UserID: 2, Total: 150, Status: "paid"},
 	}
-	require.NoError(t, gormx.New[Order]().CreateMany(orders))
+	require.NoError(t, gormz.New[Order]().CreateMany(orders))
 
 	results, err := advanced.GroupBy[Order]("user_id").
 		Count("id", "paid_count").
